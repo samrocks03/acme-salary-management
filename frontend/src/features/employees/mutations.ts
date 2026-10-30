@@ -40,8 +40,11 @@ export function useDeleteEmployee(id: string) {
   return useMutation({
     mutationFn: () => deleteEmployee(browserApiClient, id),
     onSuccess: () => {
-      queryClient.removeQueries({ queryKey: employeeKeys.detail(id) });
-      queryClient.removeQueries({ queryKey: salaryRevisionKeys.list(id) });
+      // The detail page is still mounted here: removing (or invalidating) its detail/revision queries
+      // would make the live observers refetch a now-deleted employee (404). They are garbage-collected
+      // once the page unmounts, and the server route returns not-found for the id anyway.
+      void queryClient.cancelQueries({ queryKey: employeeKeys.detail(id) });
+      void queryClient.cancelQueries({ queryKey: salaryRevisionKeys.list(id) });
       void queryClient.invalidateQueries({ queryKey: employeeKeys.lists() });
       void queryClient.invalidateQueries({ queryKey: insightKeys.all });
     },
