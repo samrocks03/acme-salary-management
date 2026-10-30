@@ -14,8 +14,8 @@ bin/rails db:seed             # 10,000 employees + ~23k salary revisions + 2 use
 bin/rails server              # http://localhost:3001 (PORT to override)
 ```
 
-Seeded accounts (password `Password@123`): `hr@acme.test` (hr_manager, read + write) and `viewer@acme.test`
-(viewer, read-only). `SEED_EMPLOYEES=500` seeds fewer; `SEED_RESET=1` wipes employees and re-seeds (otherwise the
+Seeded accounts (password `Password@123`, or `SEED_PASSWORD` when set — required in production):
+`hr@acme.test` (hr_manager, read + write) and `viewer@acme.test` (viewer, read-only). `SEED_EMPLOYEES=500` seeds fewer; `SEED_RESET=1` wipes employees and re-seeds (otherwise the
 seed skips when employees already exist).
 
 Environment (all optional locally): `DATABASE_HOST|PORT|USERNAME|PASSWORD`, `DATABASE_URL` (production),
