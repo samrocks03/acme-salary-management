@@ -84,3 +84,7 @@ RSpec/DescribeClass:
 RSpec/RepeatedExample:
   Exclude:
     - 'spec/policies/**/*.rb'
+
+Metrics/ModuleLength:
+  Exclude:
+    - 'spec/support/**/*.rb'

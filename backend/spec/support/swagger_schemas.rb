@@ -9,7 +9,9 @@ module SwaggerSchemas
       error: error,
       user: resource('user', user_attributes),
       employee: resource('employee', employee_attributes),
-      employee_input: employee_input
+      employee_input: employee_input,
+      salary_revision: resource('salary_revision', salary_revision_attributes),
+      salary_revision_input: salary_revision_input
     }
   end
 
@@ -85,6 +87,33 @@ module SwaggerSchemas
         employment_type: { type: :string, enum: %w[full_time part_time contractor] },
         hired_on: { type: :string, format: :date, example: '2022-04-11' },
         salary: { type: :number, example: 2_400_000 }
+      }
+    }
+  end
+
+  def salary_revision_attributes
+    {
+      employee_id: { type: :integer },
+      amount: { type: :number, example: 2_640_000.0 },
+      previous_amount: { type: :number, nullable: true, example: 2_400_000.0 },
+      change_percent: { type: :number, nullable: true, example: 10.0 },
+      currency: { type: :string, example: 'INR' },
+      effective_on: { type: :string, format: :date },
+      reason: { type: :string, enum: SalaryRevision::REASONS },
+      note: { type: :string, nullable: true },
+      changed_by_name: { type: :string },
+      created_at: { type: :string, format: 'date-time' }
+    }
+  end
+
+  def salary_revision_input
+    {
+      type: :object, required: %w[amount effective_on reason],
+      properties: {
+        amount: { type: :number, example: 2_640_000, minimum: 0, exclusiveMinimum: true, maximum: 100_000_000 },
+        effective_on: { type: :string, format: :date, example: '2026-04-01' },
+        reason: { type: :string, enum: SalaryRevision::USER_REASONS },
+        note: { type: :string, maxLength: 500, example: 'Promoted to Senior' }
       }
     }
   end

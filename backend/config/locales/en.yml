@@ -38,3 +38,10 @@ en:
     destroy:
       success:
         message: "Employee %{name} deleted successfully."
+  salary_revision:
+    index:
+      success:
+        message: "Salary history retrieved successfully."
+    create:
+      success:
+        message: "Salary revision recorded successfully."

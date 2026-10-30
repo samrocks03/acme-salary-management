@@ -15,7 +15,9 @@ Rails.application.routes.draw do
     namespace :v1 do
       get 'me', to: 'me#show'
 
-      resources :employees, only: %i[index show create update destroy]
+      resources :employees, only: %i[index show create update destroy] do
+        resources :salary_revisions, only: %i[index create]
+      end
     end
   end
 end
