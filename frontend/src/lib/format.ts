@@ -60,12 +60,15 @@ export function formatDate(value: string | null | undefined): string {
   return Number.isNaN(date.getTime()) ? "—" : dateFormatter.format(date);
 }
 
-/** Local calendar date as `YYYY-MM-DD` (for `<input type="date">` limits and validation). */
-export function toIsoDate(date: Date): string {
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, "0");
-  const d = String(date.getDate()).padStart(2, "0");
-  return `${y}-${m}-${d}`;
+/**
+ * Today's business date as `YYYY-MM-DD`. Business dates are UTC calendar dates: the API validates
+ * "not in the future" against `Date.current` (UTC), so the UI must use the same day everywhere — never the
+ * browser's local date, which is a day ahead/behind around midnight in IST/the Americas.
+ * Server-rendered components should get this as a prop from their section (computed once per request)
+ * rather than calling it during render, so server and client HTML agree.
+ */
+export function todayUtcIso(now: Date = new Date()): string {
+  return now.toISOString().slice(0, 10);
 }
 
 const LABEL_OVERRIDES: Record<string, string> = {
