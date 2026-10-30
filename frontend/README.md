@@ -78,9 +78,10 @@ All API knowledge lives in `src/lib/api/*` and `src/features/*/api.ts`.
    already owns the data, so an RSC round-trip would only re-prefetch it. Lists use `keepPreviousData`; search is
    debounced (300 ms).
 5. Mutations go through the proxy, invalidate the narrowest keys (`employeeKeys.detail(id)`, `employeeKeys.lists()`,
-   `salaryRevisionKeys.list(id)`, `insightKeys.all`) and map API 422 errors onto form fields.
+   `salaryRevisionKeys.list(id)`, `insightKeys.all`, and `lookupKeys.all` for employee writes) and map API 422 errors onto form fields.
 
-`staleTime`: 60 s default, lookups `Infinity`, insights 5 min (writes invalidate them). 4xx responses are not retried.
+`staleTime`: 60 s default, lookups 5 min (job titles/departments come from employee data, so employee writes
+invalidate them), insights 5 min (writes invalidate them). 4xx responses are not retried.
 
 ## Security
 

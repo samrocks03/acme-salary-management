@@ -7,13 +7,18 @@ export const lookupKeys = {
   all: ["lookups"] as const,
 };
 
-/** Static reference data: fetched once per session and never considered stale. */
+/**
+ * Reference data for filters and forms. Mostly static (countries, enums, FX), but `job_titles` and
+ * `departments` are derived from employee data, so it can't be cached forever: it goes stale after a few
+ * minutes (picking up other users' changes) and employee writes invalidate it immediately.
+ */
+export const LOOKUPS_STALE_TIME = 5 * 60 * 1000;
+
 export const lookupsQuery = (client: ApiClient) =>
   queryOptions({
     queryKey: lookupKeys.all,
     queryFn: () => getLookups(client),
-    staleTime: Infinity,
-    gcTime: Infinity,
+    staleTime: LOOKUPS_STALE_TIME,
   });
 
 export function findCountry(lookups: Lookups | undefined, code: string | undefined): Country | undefined {

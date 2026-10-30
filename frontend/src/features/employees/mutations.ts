@@ -3,6 +3,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { insightKeys } from "@/features/insights/keys";
+import { lookupKeys } from "@/features/lookups/queries";
 import { salaryRevisionKeys } from "@/features/salary-revisions/queries";
 import { browserApiClient } from "@/lib/api/browser";
 import { createEmployee, deleteEmployee, updateEmployee } from "./api";
@@ -17,6 +18,7 @@ export function useCreateEmployee() {
       queryClient.setQueryData(employeeKeys.detail(employee.id), employee);
       void queryClient.invalidateQueries({ queryKey: employeeKeys.lists() });
       void queryClient.invalidateQueries({ queryKey: insightKeys.all });
+      void queryClient.invalidateQueries({ queryKey: lookupKeys.all }); // job titles/departments may change
       toast.success(`${employee.full_name} was added.`);
     },
   });
@@ -30,6 +32,7 @@ export function useUpdateEmployee(id: string) {
       queryClient.setQueryData(employeeKeys.detail(id), employee);
       void queryClient.invalidateQueries({ queryKey: employeeKeys.lists() });
       void queryClient.invalidateQueries({ queryKey: insightKeys.all });
+      void queryClient.invalidateQueries({ queryKey: lookupKeys.all }); // job titles/departments may change
       toast.success("Employee details saved.");
     },
   });
@@ -47,6 +50,7 @@ export function useDeleteEmployee(id: string) {
       void queryClient.cancelQueries({ queryKey: salaryRevisionKeys.list(id) });
       void queryClient.invalidateQueries({ queryKey: employeeKeys.lists() });
       void queryClient.invalidateQueries({ queryKey: insightKeys.all });
+      void queryClient.invalidateQueries({ queryKey: lookupKeys.all }); // job titles/departments may change
     },
   });
 }
