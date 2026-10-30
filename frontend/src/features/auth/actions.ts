@@ -1,6 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { z } from "zod";
 import { clearSessionToken, getSessionToken, setSessionToken } from "@/lib/auth/cookie";
 import { LOGIN_PATH } from "@/lib/auth/constants";
 import { safeNextPath } from "@/lib/safe-redirect";
@@ -20,7 +21,7 @@ export async function signIn(_previous: SignInState, formData: FormData): Promis
   });
   const email = String(formData.get("email") ?? "");
   if (!parsed.success) {
-    return { fieldErrors: parsed.error.flatten().fieldErrors, email };
+    return { fieldErrors: z.flattenError(parsed.error).fieldErrors, email };
   }
 
   const result = await requestSignIn(parsed.data.email, parsed.data.password);
