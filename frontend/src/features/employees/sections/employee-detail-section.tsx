@@ -37,6 +37,7 @@ export async function EmployeeDetailSection({ params }: { params: Promise<{ id: 
         id={id}
         canEdit={can(user.role, "employee:update")}
         canDelete={can(user.role, "employee:delete")}
+        canRecordSalary={can(user.role, "salary_revision:create")}
       />
     </HydrationBoundary>
   );

@@ -8,3 +8,11 @@ vi.mock("server-only", () => ({}));
 afterEach(() => {
   cleanup();
 });
+
+// jsdom lacks the pointer-capture / scrolling APIs Radix Select uses when opening.
+if (typeof Element !== "undefined") {
+  Element.prototype.hasPointerCapture ??= () => false;
+  Element.prototype.setPointerCapture ??= () => {};
+  Element.prototype.releasePointerCapture ??= () => {};
+  Element.prototype.scrollIntoView ??= () => {};
+}
