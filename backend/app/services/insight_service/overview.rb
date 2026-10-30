@@ -20,7 +20,8 @@ module InsightService
 
     def build
       headcount, countries_count, total, avg, median = InsightRepository.overview
-      { headcount:, countries_count:, total_payroll_usd: number(total), avg_salary_usd: number(avg),
+      # A sum over no employees is a real 0; avg/median over none are null (no data).
+      { headcount:, countries_count:, total_payroll_usd: number(total || 0), avg_salary_usd: number(avg),
         median_salary_usd: number(median), fx_as_of: Reference::Fx.as_of }
     end
   end

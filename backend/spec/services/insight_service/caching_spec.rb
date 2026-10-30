@@ -17,15 +17,29 @@ RSpec.describe 'Insight caching' do # rubocop:disable RSpec/DescribeClass
     expect(InsightRepository).to have_received(:overview).once
   end
 
-  it 'recomputes after an employee is created, updated or deleted' do
+  it 'recomputes after an employee is created' do
     expect(overview.data[:headcount]).to eq(5)
 
     create(:employee, :us, salary: 300_000)
+
     expect(overview.data[:headcount]).to eq(6)
+  end
+
+  it 'recomputes after an employee is updated (no create or delete involved)' do
+    by_job_title = -> { InsightService::ByJobTitle.new({}, user).call.data[:rows].pluck(:job_title) }
+    expect(by_job_title.call).not_to include('Staff Engineer')
 
     us_engineer.update!(job_title: 'Staff Engineer')
-    in_engineer.destroy!
+
+    expect(by_job_title.call).to include('Staff Engineer')
+  end
+
+  it 'recomputes after an employee is deleted' do
     expect(overview.data[:headcount]).to eq(5)
+
+    in_engineer.destroy!
+
+    expect(overview.data[:headcount]).to eq(4)
   end
 
   it 'recomputes after a salary revision' do

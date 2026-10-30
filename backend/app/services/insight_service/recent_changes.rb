@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module InsightService
-  # Raises and other salary changes (excluding hires) effective in the last `days` days.
+  # Raises and other salary changes (excluding hires) effective in the last `days` days, today included.
   class RecentChanges < Base
     include Support
 
@@ -31,7 +31,7 @@ module InsightService
     end
 
     def build
-      since = Date.current - @days
+      since = Date.current - @days + 1 # inclusive range: `days` calendar days ending today
       (revisions_count, employees_count, avg), by_reason = InsightRepository.recent_changes(since:)
       { days: @days, revisions_count:, employees_count:, avg_change_percent: number(avg),
         by_reason: by_reason.map do |reason, count, reason_avg|

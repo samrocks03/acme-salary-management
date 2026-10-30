@@ -29,8 +29,9 @@ module InsightService
       country_code ? Reference::Country.find(country_code).currency : Reference::Fx.base
     end
 
+    # nil stays nil: an average/median over no rows is "no data", not a real 0. Counts are never passed here.
     def number(value)
-      value.to_f
+      value&.to_f
     end
   end
 end

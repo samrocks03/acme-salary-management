@@ -22,6 +22,26 @@ RSpec.describe SalaryRevisionService::Create do
                                                                             changed_by: hr_manager)
   end
 
+  it 'accepts an unchanged amount as a 0% revision (e.g. an annual review without a raise)' do
+    result = call(amount: '1100000')
+
+    expect(result).to be_success
+    expect(result.data[:attributes]).to include(amount: 1_100_000.0, previous_amount: 1_100_000.0, change_percent: 0.0)
+    expect(employee.reload.salary).to eq(1_100_000)
+  end
+
+  it 'reads the employee with SELECT ... FOR UPDATE inside the transaction (rule 2)' do
+    employee # create outside the subscription
+    queries = []
+    callback = ->(*, payload) { queries << payload[:sql] }
+
+    ActiveSupport::Notifications.subscribed(callback, 'sql.active_record') { call }
+
+    lock_index = queries.index { |sql| sql.match?(/FROM "employees".*FOR UPDATE/m) }
+    insert_index = queries.index { |sql| sql.start_with?('INSERT INTO "salary_revisions"') }
+    expect(lock_index).to be < insert_index
+  end
+
   it 'rejects a date before the latest revision (rule 5)' do
     result = call(effective_on: '2023-01-01')
 

@@ -53,10 +53,11 @@ class Employee < ApplicationRecord
   end
 
   # Keeps domain rule 5 (revisions are effective on/after the hire date) true when hired_on is corrected.
+  # The system `hire` revision is ignored: EmployeeService::Update moves it to the new hired_on.
   def hired_on_not_after_first_revision
     return unless hired_on && will_save_change_to_hired_on?
 
-    first = salary_revisions.minimum(:effective_on)
+    first = salary_revisions.where.not(reason: 'hire').minimum(:effective_on)
     errors.add(:hired_on, :after_first_revision, date: first.iso8601) if first && hired_on > first
   end
 end

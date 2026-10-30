@@ -13,7 +13,9 @@ module Api
         # Devise skips `authenticate_user!` inside its own controllers unless forced.
         before_action -> { authenticate_user!(force: true) }, only: :destroy
 
-        rate_limit to: 10, within: 3.minutes, only: :create, with: :render_rate_limited
+        # Keyed by IP + email: behind the Next.js BFF every login shares one IP, so an IP-only key would let
+        # anyone lock sign-in for everyone. Per-account brute force is also capped by Devise lockable.
+        rate_limit to: 10, within: 3.minutes, only: :create, by: :rate_limit_key, with: :render_rate_limited
 
         def create
           user = warden.authenticate!(auth_options)
@@ -25,6 +27,12 @@ module Api
         end
 
         private
+
+        def rate_limit_key
+          credentials = params[:user]
+          email = credentials.is_a?(ActionController::Parameters) ? credentials[:email].to_s.strip.downcase : ''
+          [request.remote_ip, email.first(255)].join(':')
+        end
 
         def render_rate_limited
           render_error(I18n.t('auth.sign_in.errors.rate_limited.detail'), status: :too_many_requests)

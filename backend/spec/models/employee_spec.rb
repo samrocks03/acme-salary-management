@@ -75,11 +75,17 @@ RSpec.describe Employee do
   end
 
   describe 'hired_on corrections' do
-    it 'cannot move the hire date after the first salary revision' do
+    it 'cannot move the hire date after the first salary change' do
       employee = create(:employee, :with_history)
 
       expect(employee.update(hired_on: employee.hired_on + 2.years)).to be(false)
-      expect(employee.errors[:hired_on].first).to start_with("can't be after the first salary revision")
+      expect(employee.errors[:hired_on].first).to start_with("can't be after the first salary change")
+    end
+
+    it 'ignores the system hire revision (it moves with hired_on)' do
+      employee = create(:employee, :with_history)
+
+      expect(employee.update(hired_on: employee.hired_on + 1.month)).to be(true)
     end
   end
 

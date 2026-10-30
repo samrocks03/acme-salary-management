@@ -23,7 +23,8 @@ RSpec.describe 'api/v1/employees' do
       parameter name: :sort, in: :query, required: false,
                 schema: { type: :string, enum: EmployeeRepository::SORTABLE_COLUMNS, default: 'full_name' }
       parameter name: :direction, in: :query, required: false, schema: { type: :string, enum: %w[asc desc] }
-      parameter name: :page, in: :query, required: false, schema: { type: :integer, minimum: 1, default: 1 }
+      parameter name: :page, in: :query, required: false, schema: { type: :integer, minimum: 1, default: 1 },
+                description: 'Clamped to 1..total_pages; `meta.page` is the page actually returned'
       parameter name: :per_page, in: :query, required: false,
                 schema: { type: :integer, minimum: 1, maximum: 100, default: 25 }
 
@@ -71,6 +72,17 @@ RSpec.describe 'api/v1/employees' do
           run_test! do |response|
             expect(response.parsed_body['data'].pluck('attributes').pluck('full_name')).to eq(['Ravi Shah'])
             expect(response.parsed_body['meta']).to include('total_count' => 3, 'total_pages' => 2)
+          end
+        end
+
+        context 'when the page is past the end (or too large for an integer column)' do
+          let(:per_page) { 2 }
+          let(:page) { '99999999999999999999' }
+
+          run_test! do |response|
+            expect(response.parsed_body['data'].pluck('attributes').pluck('full_name')).to eq(['Ravi Shah'])
+            expect(response.parsed_body['meta']).to eq('page' => 2, 'per_page' => 2, 'total_count' => 3,
+                                                       'total_pages' => 2)
           end
         end
 
@@ -218,7 +230,8 @@ RSpec.describe 'api/v1/employees' do
       produces 'application/json'
       security [{ bearer_auth: [] }]
       description 'HR manager only. `salary`, `currency` and `employee_code` are ignored; ' \
-                  "changing `country_code` returns 422 \"can't be changed\"."
+                  "changing `country_code` returns 422 \"can't be changed\". Changing `hired_on` moves the " \
+                  '`hire` revision with it; a `hired_on` after the first salary change (non-hire revision) is 422.'
       parameter name: :payload, in: :body, schema: SwaggerSchemas.body(:employee, 'employee_input')
       let(:payload) { { employee: { job_title: 'Senior Software Engineer', salary: 1, currency: 'USD' } } }
 
@@ -229,6 +242,23 @@ RSpec.describe 'api/v1/employees' do
           attrs = response.parsed_body.dig('data', 'attributes')
           expect(attrs).to include('job_title' => 'Senior Software Engineer', 'salary' => 2_400_000.0,
                                    'currency' => 'INR')
+        end
+      end
+
+      response(422, 'hired_on after the first salary change') do
+        schema '$ref' => '#/components/schemas/error'
+        let(:payload) { { employee: { hired_on: (employee.hired_on + 2.years).iso8601 } } }
+
+        before do
+          create(:salary_revision, employee:, reason: 'annual_review', previous_amount: employee.salary,
+                                   amount: employee.salary * 1.1, effective_on: employee.hired_on + 1.year)
+        end
+
+        run_test! do |response|
+          first_change = (employee.hired_on + 1.year).iso8601
+          expect(response.parsed_body['errors']).to eq(
+            'hired_on' => ["can't be after the first salary change (#{first_change})"]
+          )
         end
       end
 

@@ -5,10 +5,18 @@ require 'rails_helper'
 RSpec.describe 'Insights on sparse data' do # rubocop:disable RSpec/DescribeClass
   let(:user) { create(:user, :viewer) }
 
-  it 'returns zeros and empty collections when there are no employees' do
-    expect(InsightService::Overview.new({}, user).call.data).to include(headcount: 0, total_payroll_usd: 0.0)
+  it 'returns zero counts, null averages and empty collections when there are no employees' do
+    expect(InsightService::Overview.new({}, user).call.data).to include(
+      headcount: 0, countries_count: 0, total_payroll_usd: 0.0, avg_salary_usd: nil, median_salary_usd: nil
+    )
     expect(InsightService::ByCountry.new({}, user).call.data).to eq([])
     expect(InsightService::SalaryDistribution.new({}, user).call.data).to eq(currency: 'USD', buckets: [])
+  end
+
+  it 'returns a null average change (not 0%) when there are no revisions in the window' do
+    data = InsightService::RecentChanges.new({}, user).call.data
+
+    expect(data).to eq(days: 90, revisions_count: 0, employees_count: 0, avg_change_percent: nil, by_reason: [])
   end
 
   it 'returns a single bucket when every salary is equal' do

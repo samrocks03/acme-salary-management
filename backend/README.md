@@ -14,8 +14,8 @@ bin/rails db:seed             # 10,000 employees + ~23k salary revisions + 2 use
 bin/rails server              # http://localhost:3001 (PORT to override)
 ```
 
-Seeded accounts (password `Password@123`): `hr@acme.test` (hr_manager, read + write) and `viewer@acme.test`
-(viewer, read-only). `SEED_EMPLOYEES=500` seeds fewer; `SEED_RESET=1` wipes employees and re-seeds (otherwise the
+Seeded accounts (password `Password@123`, or `SEED_PASSWORD` when set — required in production):
+`hr@acme.test` (hr_manager, read + write) and `viewer@acme.test` (viewer, read-only). `SEED_EMPLOYEES=500` seeds fewer; `SEED_RESET=1` wipes employees and re-seeds (otherwise the
 seed skips when employees already exist).
 
 Environment (all optional locally): `DATABASE_HOST|PORT|USERNAME|PASSWORD`, `DATABASE_URL` (production),
@@ -78,7 +78,7 @@ spec/                             models, services, policies, lib, requests/api/
 - **Insights** are cached in `Rails.cache` under a key that includes a cheap data version
   (`count`, `max(updated_at)`, `max(revision id)`), so any write invalidates them — no busting code to forget.
 - **Security**: Devise + devise-jwt (denylist revocation on sign-out, 8 h expiry), lockable (5 attempts / 15 min),
-  `rate_limit` on sign-in (10 / 3 min / IP), paranoid auth messages, Pundit with `verify_authorized`, allow-listed
+  `rate_limit` on sign-in (10 / 3 min per IP + email, so the shared BFF IP is not one global bucket), paranoid auth messages, Pundit with `verify_authorized`, allow-listed
   sort columns, `sanitize_sql_like` + bound params for search, HTML stripped from text input, CSV formula-injection
   escaping, security headers, CORS limited to `FRONTEND_ORIGIN` with `Authorization` exposed, salary/amount filtered
   from logs.

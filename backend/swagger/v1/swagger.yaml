@@ -13,7 +13,8 @@ paths:
       tags:
       - Auth
       description: Returns the JWT in the `Authorization` response header (8h expiry).
-        5 failed attempts lock the account for 15 minutes; 10 requests / 3 min / IP.
+        5 failed attempts lock the account for 15 minutes; 10 requests / 3 min per
+        IP + email.
       parameters: []
       responses:
         '200':
@@ -169,6 +170,7 @@ paths:
           type: integer
           minimum: 1
           default: 1
+        description: Clamped to 1..total_pages; `meta.page` is the page actually returned
       - name: per_page
         in: query
         required: false
@@ -387,7 +389,9 @@ paths:
       security:
       - bearer_auth: []
       description: HR manager only. `salary`, `currency` and `employee_code` are ignored;
-        changing `country_code` returns 422 "can't be changed".
+        changing `country_code` returns 422 "can't be changed". Changing `hired_on`
+        moves the `hire` revision with it; a `hired_on` after the first salary change
+        (non-hire revision) is 422.
       parameters: []
       responses:
         '200':
@@ -522,8 +526,10 @@ paths:
                         type: number
                       avg_salary_usd:
                         type: number
+                        nullable: true
                       median_salary_usd:
                         type: number
+                        nullable: true
                       fx_as_of:
                         type: string
                         format: date
@@ -899,6 +905,7 @@ paths:
                         type: integer
                       avg_change_percent:
                         type: number
+                        nullable: true
                       by_reason:
                         type: array
                         items:

@@ -11,7 +11,7 @@ RSpec.describe 'api/v1/auth' do
       consumes 'application/json'
       produces 'application/json'
       description 'Returns the JWT in the `Authorization` response header (8h expiry). ' \
-                  '5 failed attempts lock the account for 15 minutes; 10 requests / 3 min / IP.'
+                  '5 failed attempts lock the account for 15 minutes; 10 requests / 3 min per IP + email.'
       parameter name: :credentials, in: :body, schema: {
         type: :object, required: %w[user],
         properties: { user: { type: :object, required: %w[email password],
@@ -54,6 +54,30 @@ RSpec.describe 'api/v1/auth' do
 
         run_test!
       end
+    end
+  end
+
+  describe 'rate limiting' do
+    let!(:other) { create(:user, email: 'viewer@acme.test', password: 'Password@123') }
+
+    def sign_in(email, password)
+      post '/api/v1/auth/sign_in', params: { user: { email:, password: } }, as: :json
+    end
+
+    it 'limits one email without locking everyone else out behind the same IP (the BFF)' do
+      10.times { sign_in(user.email, 'wrong-password') }
+
+      sign_in(' HR@acme.test ', 'wrong-password')
+      expect(response).to have_http_status(:too_many_requests)
+
+      sign_in(other.email, 'Password@123')
+      expect(response).to have_http_status(:ok)
+    end
+
+    it 'does not fail when the user param is not an object' do
+      post '/api/v1/auth/sign_in', params: { user: 'x' }, as: :json
+
+      expect(response).to have_http_status(:unauthorized)
     end
   end
 
