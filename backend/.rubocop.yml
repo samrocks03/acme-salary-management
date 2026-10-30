@@ -1,0 +1,110 @@
+plugins:
+  - rubocop-rails
+  - rubocop-rspec
+  - rubocop-rspec_rails
+  - rubocop-factory_bot
+  - rubocop-performance
+
+AllCops:
+  TargetRubyVersion: 3.4
+  NewCops: enable
+  SuggestExtensions: false
+  Exclude:
+    - 'bin/**/*'
+    - 'db/schema.rb'
+    - 'vendor/**/*'
+    - 'tmp/**/*'
+    - 'log/**/*'
+    - 'node_modules/**/*'
+
+Style/Documentation:
+  Enabled: false
+
+Style/HashSyntax:
+  EnforcedStyle: ruby19_no_mixed_keys
+
+Layout/LineLength:
+  Max: 120
+
+Metrics/BlockLength:
+  Exclude:
+    - 'config/**/*.rb'
+    - 'db/migrate/**/*.rb'
+    - 'spec/**/*.rb'
+
+Metrics/MethodLength:
+  Max: 15
+  Exclude:
+    - 'db/**/*.rb'
+    - 'spec/support/**/*.rb'
+
+Metrics/AbcSize:
+  Exclude:
+    - 'db/**/*.rb'
+    - 'spec/support/**/*.rb'
+
+Metrics/ClassLength:
+  Enabled: false
+
+RSpec/MultipleExpectations:
+  Max: 5
+
+RSpec/ExampleLength:
+  Max: 20
+
+RSpec/MultipleMemoizedHelpers:
+  Max: 10
+  Exclude:
+    - 'spec/requests/**/*.rb'
+
+RSpec/NestedGroups:
+  Max: 4
+
+# rswag request specs: `let`s are referenced implicitly by run_test! and describe blocks use path strings.
+RSpec/LetSetup:
+  Exclude:
+    - 'spec/requests/**/*.rb'
+    - 'spec/support/**/*.rb'
+RSpec/VariableName:
+  Exclude:
+    - 'spec/requests/**/*.rb'
+    - 'spec/support/shared_examples/**/*.rb'
+# rswag: shared `response` blocks must be included into the operation group (it_behaves_like would nest them).
+RSpec/IncludeExamples:
+  Exclude:
+    - 'spec/requests/**/*.rb'
+RSpec/SharedContext:
+  Exclude:
+    - 'spec/support/shared_examples/**/*.rb'
+RSpec/EmptyExampleGroup:
+  Exclude:
+    - 'spec/requests/**/*.rb'
+# rswag's `path`/`response` blocks are example groups RuboCop doesn't recognise; these cops would
+# otherwise merge or flag hooks across different operations.
+RSpec/ScatteredSetup:
+  Exclude:
+    - 'spec/requests/**/*.rb'
+RSpec/ScatteredLet:
+  Exclude:
+    - 'spec/requests/**/*.rb'
+RSpec/DescribeClass:
+  Exclude:
+    - 'spec/requests/**/*.rb'
+
+# Pundit's `permissions :a?, :b? do` blocks look like repeated examples to this cop.
+RSpec/RepeatedExample:
+  Exclude:
+    - 'spec/policies/**/*.rb'
+
+Metrics/ModuleLength:
+  Exclude:
+    - 'spec/support/**/*.rb'
+
+Rails/Output:
+  Exclude:
+    - 'db/seeds.rb'
+
+# Seeds bulk-insert on purpose (see Seeds::EmployeeSeeder#insert_batch).
+Rails/SkipsModelValidations:
+  Exclude:
+    - 'lib/seeds/**/*.rb'

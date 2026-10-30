@@ -1,0 +1,79 @@
+en:
+  exception:
+    errors:
+      detail: "Something went wrong. Please try again."
+  errors:
+    not_found: "Record not found."
+    route_not_found: "No such endpoint."
+    forbidden: "You are not authorized to perform this action."
+    bad_request: "Bad request: %{detail}"
+  auth:
+    sign_in:
+      success:
+        message: "Signed in successfully."
+      errors:
+        rate_limited:
+          detail: "Too many sign-in attempts. Please try again in a few minutes."
+    sign_out:
+      success:
+        message: "Signed out successfully."
+    me:
+      success:
+        message: "Current user retrieved successfully."
+  employee:
+    errors:
+      not_found:
+        detail: "Employee not found."
+    index:
+      success:
+        message: "Employees retrieved successfully."
+    show:
+      success:
+        message: "Employee retrieved successfully."
+    create:
+      success:
+        message: "Employee created successfully."
+    update:
+      success:
+        message: "Employee updated successfully."
+    destroy:
+      success:
+        message: "Employee %{name} deleted successfully."
+    export:
+      success:
+        message: "Employees exported successfully."
+  salary_revision:
+    index:
+      success:
+        message: "Salary history retrieved successfully."
+    create:
+      success:
+        message: "Salary revision recorded successfully."
+  insight:
+    errors:
+      invalid_country:
+        detail: "is not a supported country"
+      invalid_days:
+        detail: "must be a whole number between 1 and 365"
+    overview:
+      success:
+        message: "Overview retrieved successfully."
+    by_country:
+      success:
+        message: "Pay by country retrieved successfully."
+    by_job_title:
+      success:
+        message: "Pay by job title retrieved successfully."
+    by_department:
+      success:
+        message: "Pay by department retrieved successfully."
+    salary_distribution:
+      success:
+        message: "Salary distribution retrieved successfully."
+    recent_changes:
+      success:
+        message: "Recent salary changes retrieved successfully."
+  lookup:
+    index:
+      success:
+        message: "Lookups retrieved successfully."
