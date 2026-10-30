@@ -8,18 +8,17 @@ import { Money } from "@/components/atoms/money";
 import { QueryError } from "@/components/molecules/query-error";
 import { StatCard } from "@/components/molecules/stat-card";
 import { CountryPayTable } from "@/components/organisms/country-pay-table";
-import { RecentChangesCard } from "@/components/organisms/recent-changes-card";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { browserApiClient } from "@/lib/api/browser";
 import { formatNumber } from "@/lib/format";
-import { overviewQuery, payByCountryQuery, recentChangesQuery } from "../queries";
+import { overviewQuery, payByCountryQuery } from "../queries";
 import { PayBarChart } from "./charts";
+import { RecentChangesContainer } from "./recent-changes-container";
 
 export function DashboardContainer() {
   const overview = useQuery(overviewQuery(browserApiClient));
   const byCountry = useQuery(payByCountryQuery(browserApiClient));
-  const recent = useQuery(recentChangesQuery(browserApiClient));
 
   const chartData = useMemo(
     () => (byCountry.data ?? []).map((row) => ({ label: row.country_name, value: row.median_salary_usd })),
@@ -92,13 +91,7 @@ export function DashboardContainer() {
         </Card>
       </div>
 
-      {recent.isError ? (
-        <QueryError error={recent.error} onRetry={() => recent.refetch()} />
-      ) : recent.data ? (
-        <RecentChangesCard data={recent.data} />
-      ) : (
-        <Skeleton className="h-48 w-full" />
-      )}
+      <RecentChangesContainer />
     </div>
   );
 }

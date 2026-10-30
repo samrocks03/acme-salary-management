@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import { PageHeader } from "@/components/templates/page-header";
-import { BackToEmployees } from "@/features/employees/containers/employee-detail-container";
+import { BackToEmployees } from "@/features/employees/components/back-to-employees";
 import { EditEmployeeSection, EmployeeFormSkeleton } from "@/features/employees/sections/employee-form-sections";
 
 export const metadata: Metadata = { title: "Edit employee" };

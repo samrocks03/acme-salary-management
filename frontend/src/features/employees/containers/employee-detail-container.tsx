@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { ArrowLeftIcon, PencilIcon, Trash2Icon } from "lucide-react";
+import { PencilIcon, Trash2Icon } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import { RecordSalaryDialog } from "@/features/salary-revisions/containers/record-salary-dialog";
 import { salaryRevisionsQuery } from "@/features/salary-revisions/queries";
 import { browserApiClient } from "@/lib/api/browser";
+import { BackToEmployees } from "../components/back-to-employees";
 import { useDeleteEmployee } from "../mutations";
 import { employeeDetailQuery } from "../queries";
 
@@ -23,17 +24,6 @@ interface EmployeeDetailContainerProps {
   canEdit: boolean;
   canDelete: boolean;
   canRecordSalary: boolean;
-}
-
-export function BackToEmployees() {
-  return (
-    <Button asChild variant="link" size="sm" className="-ml-2.5 w-fit text-muted-foreground">
-      <Link href="/employees">
-        <ArrowLeftIcon data-icon="inline-start" />
-        Employees
-      </Link>
-    </Button>
-  );
 }
 
 export function EmployeeDetailContainer({ id, canEdit, canDelete, canRecordSalary }: EmployeeDetailContainerProps) {

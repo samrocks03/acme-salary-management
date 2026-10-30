@@ -6,7 +6,7 @@ import { todayUtcIso } from "@/lib/format";
 import { getQueryClient } from "@/lib/query-client";
 import { requirePermission } from "@/lib/session";
 import { CreateEmployeeContainer, EditEmployeeContainer } from "../containers/employee-form-container";
-import { loadEmployeeOr404 } from "./employee-detail-section";
+import { loadEmployeeOr404 } from "../loaders";
 
 /**
  * Viewers get the 403 page (forbidden()) before any form is rendered.

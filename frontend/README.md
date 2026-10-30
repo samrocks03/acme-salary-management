@@ -40,6 +40,8 @@ src/
     mutations.ts            useMutation hooks with narrow invalidation + toasts
     schemas.ts              zod rules mirroring the API's validations
     sections/               async Server Components: auth check + prefetch + HydrationBoundary
+    loaders.ts              server-only loaders shared by sections (e.g. loadEmployeeOr404)
+    components/             server-safe presentational pieces specific to the feature
     containers/             'use client' components wiring hooks/URL state to organisms
   lib/
     api/                    ApiClient interface, http core, server client, browser client, proxy handler
