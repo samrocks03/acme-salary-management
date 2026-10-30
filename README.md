@@ -207,7 +207,7 @@ dynamic and defeat PPR's static shells. The mitigations above don't depend on CS
 | Suite | What | Run |
 |---|---|---|
 | Backend — RSpec | Models, services (every domain rule), Pundit policies, rswag request specs per role (2xx/401/403/404/422), insights math, caching, seeds — **221 examples, ~99.9 % line coverage, ~6 s** | `cd backend && bundle exec rspec` |
-| Frontend — Vitest | Utilities, zod schemas, URL params, permissions, proxy handler (allow-list, Origin, size limit), organisms per role, forms, mutations' cache invalidation | `cd frontend && npm test` |
+| Frontend — Vitest | Utilities, zod schemas, URL params + history, permissions, proxy handler (allow-list, Origin, size limit), organisms per role, forms, mutations' cache invalidation — **172 tests** | `cd frontend && npm test` |
 
 Also: `bundle exec rubocop`, `bundle exec brakeman`, `npm run lint`, `npm run typecheck`, `npm run build` — all in CI.
 

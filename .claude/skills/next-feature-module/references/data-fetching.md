@@ -55,7 +55,8 @@ export const employeeListQuery = (client: ApiClient, params: EmployeeListParams)
     queryFn: ({ signal }) => listEmployees(client, params, signal), // aborted when params change
   });
 ```
-Lookups (countries, departments…) use `staleTime: Infinity` — they change on deploy, not per request.
+Lookups use a 5-minute `staleTime` and are invalidated after employee writes — countries/departments are config,
+but `job_titles` come from employee data.
 
 ## 4. Server prefetch — inside the Suspense boundary
 ```tsx

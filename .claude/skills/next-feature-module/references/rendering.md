@@ -24,9 +24,12 @@ Filters, sort, direction, page and the insights country live in the query string
 shareable links, working back button, and the server can prefetch exactly what the client will ask for.
 - Parse/serialize with one helper per feature (`parseEmployeeListParams` / `serializeEmployeeListParams` in
   `features/employees/params.ts`) with defaults and clamping (`per_page` 1–100), so server and client agree.
-- The list container keeps params in state and mirrors them to the URL with `history.replaceState` (no RSC
-  round-trip, so the list isn't fetched twice); debounce text search 300 ms; `applyListChange` resets `page`
-  to 1 whenever a filter changes.
+- The list container keeps params in state and mirrors them to the URL with the History API (no RSC round-trip,
+  so the list isn't fetched twice): `pushState` for page/sort/filter changes so Back steps through them,
+  `replaceState` for debounced search typing and server-clamped pages; `popstate` restores state.
+  `applyListChange` resets `page` to 1 whenever a filter changes.
+- "Today" is the UTC business date (`todayUtcIso`), computed on the server and passed down — never `new Date()`
+  in a server-rendered component.
 - Server-rendered forms stay disabled until hydrated (`hooks/use-hydrated.ts`) so early typing isn't lost.
 
 ## Role gating
