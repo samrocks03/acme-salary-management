@@ -26,6 +26,19 @@ RSpec.describe 'HTTP hardening' do
                                         'Content-Security-Policy' => "default-src 'none'; frame-ancestors 'none'")
   end
 
+  it 'does not leak JWT library errors for bad or revoked tokens' do
+    get '/api/v1/me', headers: { 'Authorization' => 'Bearer abc' }
+
+    expect(response).to have_http_status(:unauthorized)
+    expect(response.parsed_body['errors']['base']).to eq(['Your session expired. Please sign in again to continue.'])
+  end
+
+  it 'asks unauthenticated clients to sign in' do
+    get '/api/v1/me'
+
+    expect(response.parsed_body['errors']['base']).to eq(['You need to sign in before continuing.'])
+  end
+
   it 'answers unknown API routes with the JSON error envelope' do
     get '/api/v1/nope'
 
