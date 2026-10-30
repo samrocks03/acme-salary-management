@@ -2,3 +2,20 @@ en:
   exception:
     errors:
       detail: "Something went wrong. Please try again."
+  errors:
+    not_found: "Record not found."
+    forbidden: "You are not authorized to perform this action."
+    bad_request: "Bad request: %{detail}"
+  auth:
+    sign_in:
+      success:
+        message: "Signed in successfully."
+      errors:
+        rate_limited:
+          detail: "Too many sign-in attempts. Please try again in a few minutes."
+    sign_out:
+      success:
+        message: "Signed out successfully."
+    me:
+      success:
+        message: "Current user retrieved successfully."

@@ -63,6 +63,14 @@ RSpec/LetSetup:
 RSpec/VariableName:
   Exclude:
     - 'spec/requests/**/*.rb'
+    - 'spec/support/shared_examples/**/*.rb'
+# rswag: shared `response` blocks must be included into the operation group (it_behaves_like would nest them).
+RSpec/IncludeExamples:
+  Exclude:
+    - 'spec/requests/**/*.rb'
+RSpec/SharedContext:
+  Exclude:
+    - 'spec/support/shared_examples/**/*.rb'
 RSpec/EmptyExampleGroup:
   Exclude:
     - 'spec/requests/**/*.rb'
