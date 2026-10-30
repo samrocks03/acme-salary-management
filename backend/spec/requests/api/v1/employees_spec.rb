@@ -230,7 +230,8 @@ RSpec.describe 'api/v1/employees' do
       produces 'application/json'
       security [{ bearer_auth: [] }]
       description 'HR manager only. `salary`, `currency` and `employee_code` are ignored; ' \
-                  "changing `country_code` returns 422 \"can't be changed\"."
+                  "changing `country_code` returns 422 \"can't be changed\". Changing `hired_on` moves the " \
+                  '`hire` revision with it; a `hired_on` after the first salary change (non-hire revision) is 422.'
       parameter name: :payload, in: :body, schema: SwaggerSchemas.body(:employee, 'employee_input')
       let(:payload) { { employee: { job_title: 'Senior Software Engineer', salary: 1, currency: 'USD' } } }
 
@@ -241,6 +242,23 @@ RSpec.describe 'api/v1/employees' do
           attrs = response.parsed_body.dig('data', 'attributes')
           expect(attrs).to include('job_title' => 'Senior Software Engineer', 'salary' => 2_400_000.0,
                                    'currency' => 'INR')
+        end
+      end
+
+      response(422, 'hired_on after the first salary change') do
+        schema '$ref' => '#/components/schemas/error'
+        let(:payload) { { employee: { hired_on: (employee.hired_on + 2.years).iso8601 } } }
+
+        before do
+          create(:salary_revision, employee:, reason: 'annual_review', previous_amount: employee.salary,
+                                   amount: employee.salary * 1.1, effective_on: employee.hired_on + 1.year)
+        end
+
+        run_test! do |response|
+          first_change = (employee.hired_on + 1.year).iso8601
+          expect(response.parsed_body['errors']).to eq(
+            'hired_on' => ["can't be after the first salary change (#{first_change})"]
+          )
         end
       end
 

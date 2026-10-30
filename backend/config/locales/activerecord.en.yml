@@ -7,7 +7,7 @@ en:
             country_code:
               immutable: "can't be changed"
             hired_on:
-              after_first_revision: "can't be after the first salary revision (%{date})"
+              after_first_revision: "can't be after the first salary change (%{date})"
         salary_revision:
           attributes:
             effective_on:

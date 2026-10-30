@@ -389,7 +389,9 @@ paths:
       security:
       - bearer_auth: []
       description: HR manager only. `salary`, `currency` and `employee_code` are ignored;
-        changing `country_code` returns 422 "can't be changed".
+        changing `country_code` returns 422 "can't be changed". Changing `hired_on`
+        moves the `hire` revision with it; a `hired_on` after the first salary change
+        (non-hire revision) is 422.
       parameters: []
       responses:
         '200':
