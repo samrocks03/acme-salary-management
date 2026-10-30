@@ -1,0 +1,45 @@
+{
+  "skill_name": "rails-use-case",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "HR wants to see pay by employment type too (full time vs part time vs contractor), same numbers as the by_department insight. Add it to the backend.",
+      "expected_output": "A new GET /api/v1/insights/by_employment_type endpoint built through the full layering, with specs and regenerated swagger.",
+      "files": [],
+      "expectations": [
+        "Adds a route under namespace api/v1 insights",
+        "Controller action calls authorize with the insight policy",
+        "Aggregation SQL lives in InsightRepository, not the controller or service",
+        "A new InsightService class returns a ServiceResult and is cached via InsightRepository.data_version",
+        "Adds a service spec and an rswag request spec covering 200 and 401",
+        "Adds locale keys for the success message",
+        "No user input is interpolated into SQL"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "viewers shouldn't be able to see the salary history of employees anymore, only hr managers. fix the backend",
+      "expected_output": "SalaryRevisionPolicy#index? restricted to hr_manager, with policy and request specs proving viewer gets 403.",
+      "files": [],
+      "expectations": [
+        "Changes the policy method, not the controller or the frontend",
+        "Policy spec asserts viewer is not permitted and hr_manager is",
+        "Request spec documents a 403 response for a viewer token",
+        "Updates the role table in references/domain.md or flags the contract change"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Add a 'bulk raise' endpoint: give everyone in a given country and department an X% raise effective today with reason annual_review.",
+      "expected_output": "A hr_manager-only endpoint whose service creates one revision per employee and updates salaries in a transaction, efficiently for thousands of rows.",
+      "files": [],
+      "expectations": [
+        "Endpoint is authorized for hr_manager only and spec proves viewer gets 403",
+        "Salary changes go through salary revisions, never a direct update of employees.salary alone",
+        "Work happens in a single transaction and avoids per-row N+1 queries (insert_all / batched)",
+        "Validates percent range and country/department against reference data",
+        "Insights cache is invalidated by data version, not manual busting"
+      ]
+    }
+  ]
+}

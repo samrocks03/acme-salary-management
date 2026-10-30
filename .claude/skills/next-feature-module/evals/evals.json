@@ -1,0 +1,42 @@
+{
+  "skill_name": "next-feature-module",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "On the employees page add a filter for hired year range (from/to). Backend already supports hired_from and hired_to query params.",
+      "expected_output": "New filter controls wired through URL params, included in the query key, prefetched on the server, with tests.",
+      "files": [],
+      "expectations": [
+        "Filter values live in the URL and are parsed by the feature's param helper with validation",
+        "Params are part of the employeeKeys.list key so server prefetch and client query match",
+        "Changing the filter resets page to 1",
+        "EmployeeFilters organism stays presentational (props + callbacks), no fetching inside",
+        "Adds or updates unit tests for the param parsing and the filter component"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "after I record a salary change the dashboard numbers and the employees list still show the old salary until I refresh. fix it",
+      "expected_output": "The salary revision mutation invalidates the narrow set of affected keys.",
+      "files": [],
+      "expectations": [
+        "Fix is in the mutation's onSuccess invalidation, not by disabling caching or using queryClient.clear()",
+        "Invalidates employee detail, salary revision list, employee lists and insights keys",
+        "Does not add useEffect-based refetching"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Add a 'Top 10 highest paid in a country' card to the insights page using GET /api/v1/insights/top_earners?country=IN",
+      "expected_output": "Fetcher + query options + server prefetch inside Suspense + presentational organism + proxy allow-list unchanged (insights already allowed) + tests.",
+      "files": [],
+      "expectations": [
+        "Adds typed fetcher in src/features/insights/api.ts and a key under insightKeys",
+        "Data prefetched on the server inside a Suspense boundary and hydrated",
+        "New organism takes rows via props and renders money with the Money atom",
+        "Card is visible to both roles (read-only insight)",
+        "Does not use dangerouslySetInnerHTML or fetch in useEffect"
+      ]
+    }
+  ]
+}
