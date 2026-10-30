@@ -23,7 +23,6 @@ export function makeQueryClient(): QueryClient {
         // Also stream queries that are still pending when the server component renders.
         shouldDehydrateQuery: (query) =>
           defaultShouldDehydrateQuery(query) || query.state.status === "pending",
-        shouldRedactErrors: () => false,
       },
     },
   });
