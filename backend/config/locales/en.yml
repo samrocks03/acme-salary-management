@@ -4,6 +4,7 @@ en:
       detail: "Something went wrong. Please try again."
   errors:
     not_found: "Record not found."
+    route_not_found: "No such endpoint."
     forbidden: "You are not authorized to perform this action."
     bad_request: "Bad request: %{detail}"
   auth:

@@ -35,4 +35,6 @@ Rails.application.routes.draw do
       end
     end
   end
+
+  match 'api/*path', to: 'api/v1/errors#not_found', via: :all, format: false
 end
