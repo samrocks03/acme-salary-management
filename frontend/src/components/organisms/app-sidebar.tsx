@@ -3,6 +3,7 @@
 import { BarChart3Icon, LayoutDashboardIcon, UsersIcon, WalletIcon, type LucideIcon } from "lucide-react";
 import Link from "next/link";
 import { useSelectedLayoutSegment } from "next/navigation";
+import { Suspense } from "react";
 import {
   Sidebar,
   SidebarContent,
@@ -28,10 +29,32 @@ export const NAV_ITEMS: NavItem[] = [
   { href: "/insights", segment: "insights", label: "Insights", icon: BarChart3Icon },
 ];
 
-export function AppSidebar() {
-  // The active top-level segment below the (app) layout: known per route, so no Suspense/pathname bailout.
-  const activeSegment = useSelectedLayoutSegment();
+function SidebarNav({ activeSegment }: { activeSegment: string | null }) {
+  return (
+    <SidebarMenu>
+      {NAV_ITEMS.map((item) => {
+        const active = activeSegment === item.segment;
+        return (
+          <SidebarMenuItem key={item.href}>
+            <SidebarMenuButton asChild isActive={active} tooltip={item.label}>
+              <Link href={item.href} aria-current={active ? "page" : undefined}>
+                <item.icon />
+                <span>{item.label}</span>
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        );
+      })}
+    </SidebarMenu>
+  );
+}
 
+/** The active segment is request data on dynamic routes, so it streams in; the links themselves are static. */
+function ActiveSidebarNav() {
+  return <SidebarNav activeSegment={useSelectedLayoutSegment()} />;
+}
+
+export function AppSidebar() {
   return (
     <Sidebar collapsible="icon">
       <SidebarHeader>
@@ -54,21 +77,9 @@ export function AppSidebar() {
       <SidebarContent>
         <SidebarGroup>
           <SidebarGroupContent>
-            <SidebarMenu>
-              {NAV_ITEMS.map((item) => {
-                const active = activeSegment === item.segment;
-                return (
-                  <SidebarMenuItem key={item.href}>
-                    <SidebarMenuButton asChild isActive={active} tooltip={item.label}>
-                      <Link href={item.href} aria-current={active ? "page" : undefined}>
-                        <item.icon />
-                        <span>{item.label}</span>
-                      </Link>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                );
-              })}
-            </SidebarMenu>
+            <Suspense fallback={<SidebarNav activeSegment={null} />}>
+              <ActiveSidebarNav />
+            </Suspense>
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
