@@ -1,0 +1,87 @@
+# Local development: `docker compose up --build`
+#   UI       http://localhost:3000
+#   API      http://localhost:3001  (Swagger: /api-docs)
+#   Postgres localhost:5433         (5433 so it doesn't clash with a local Postgres on 5432)
+# Source code is bind-mounted, so edits on the host reload in the running containers.
+# Optional overrides live in .env (see .env.example).
+
+services:
+  db:
+    image: postgres:17
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+    ports:
+      - "${DB_PORT:-5433}:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 2s
+      timeout: 5s
+      retries: 30
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.dev
+    # Pick up Gemfile changes, prepare the DB (creates + loads db/structure.sql + seeds on first run; the seed is
+    # idempotent) and clear a stale pid file left by a killed container, which would stop Puma from booting.
+    command: >
+      bash -c "bundle check || bundle install;
+               bin/rails db:prepare && bin/rails db:seed &&
+               rm -f tmp/pids/server.pid &&
+               exec bin/rails server -b 0.0.0.0 -p 3000"
+    environment:
+      DATABASE_HOST: db
+      DATABASE_PORT: 5432
+      DATABASE_USERNAME: postgres
+      DATABASE_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      PORT: 3000
+      # The BFF calls Rails as http://backend:3000; Rails' dev host authorization only allows localhost by default.
+      RAILS_DEVELOPMENT_HOSTS: backend
+      FRONTEND_ORIGIN: http://localhost:${UI_PORT:-3000}
+      SEED_EMPLOYEES: ${SEED_EMPLOYEES:-10000}
+    ports:
+      - "${API_PORT:-3001}:3000"
+    volumes:
+      - ./backend:/rails
+      - bundle:/usr/local/bundle
+      # Container-only tmp (pids, cache, bootsnap): keeps root-owned files off the host checkout.
+      - /rails/tmp
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:3000/up"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 60s
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.dev
+    environment:
+      # Server-only: Server Components, server actions and the /api/proxy route call Rails over the compose network.
+      API_URL: http://backend:3000
+      # Poll for file changes: inotify events don't always cross bind mounts (Docker Desktop on macOS/Windows).
+      # WATCHPACK_POLLING covers Next's route watcher; WATCH_POLL_INTERVAL_MS is read by next.config.ts for Turbopack.
+      WATCHPACK_POLLING: "true"
+      WATCH_POLL_INTERVAL_MS: 500
+    ports:
+      - "${UI_PORT:-3000}:3000"
+    volumes:
+      - ./frontend:/app
+      # Anonymous volumes mask the host's node_modules/.next so the container uses its own (Linux) builds.
+      # After changing package.json run `docker compose up --build -V` to refresh node_modules.
+      - /app/node_modules
+      - /app/.next
+    depends_on:
+      backend:
+        condition: service_healthy
+
+volumes:
+  pgdata:
+  bundle:

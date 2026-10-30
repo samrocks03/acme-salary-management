@@ -1,0 +1,13 @@
+# Development image for docker compose. The code is bind-mounted at runtime (see ../docker-compose.yml);
+# node_modules lives in the image (and an anonymous volume) so the host's copy never shadows it.
+FROM node:22-alpine
+
+WORKDIR /app
+
+COPY package.json package-lock.json ./
+RUN npm ci
+
+ENV NEXT_TELEMETRY_DISABLED=1
+EXPOSE 3000
+# Listen on all interfaces so the published port reaches the dev server.
+CMD ["npm", "run", "dev", "--", "--hostname", "0.0.0.0"]

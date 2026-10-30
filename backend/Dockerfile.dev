@@ -1,0 +1,23 @@
+# Development image for docker compose. The code is bind-mounted at runtime (see ../docker-compose.yml),
+# so this image only carries Ruby, the system libraries and the gems. Production uses ./Dockerfile.
+ARG RUBY_VERSION=4.0.7
+FROM docker.io/library/ruby:$RUBY_VERSION-slim
+
+WORKDIR /rails
+
+# build-essential/libpq-dev/libyaml-dev compile native gems (pg, psych). postgresql-client (v17 on Debian trixie)
+# provides psql/pg_dump, which db:prepare needs because the schema is db/structure.sql.
+RUN apt-get update -qq && \
+    apt-get install --no-install-recommends -y build-essential curl git libpq-dev libyaml-dev pkg-config postgresql-client && \
+    rm -rf /var/lib/apt/lists /var/cache/apt/archives
+
+ENV RAILS_ENV=development \
+    BUNDLE_PATH=/usr/local/bundle
+
+# Bake the gems into the image; compose mounts a named volume over BUNDLE_PATH that is seeded from here
+# and re-checked on every boot, so a Gemfile change only needs a container restart.
+COPY Gemfile Gemfile.lock .ruby-version ./
+RUN bundle install
+
+EXPOSE 3000
+CMD ["bin/rails", "server", "-b", "0.0.0.0", "-p", "3000"]
