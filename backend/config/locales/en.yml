@@ -72,3 +72,7 @@ en:
     recent_changes:
       success:
         message: "Recent salary changes retrieved successfully."
+  lookup:
+    index:
+      success:
+        message: "Lookups retrieved successfully."

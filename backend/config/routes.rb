@@ -14,6 +14,7 @@ Rails.application.routes.draw do
   namespace :api, defaults: { format: :json } do
     namespace :v1 do
       get 'me', to: 'me#show'
+      get 'lookups', to: 'lookups#index'
 
       resources :employees, only: %i[index show create update destroy] do
         get :export, on: :collection

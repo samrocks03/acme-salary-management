@@ -147,6 +147,17 @@ module SwaggerSchemas
     end
   end
 
+  def lookups
+    strings = { type: :array, items: { type: :string } }
+    object(
+      countries: { type: :array, items: object(code: { type: :string }, name: { type: :string },
+                                               currency: { type: :string }) },
+      departments: strings, employment_types: strings, revision_reasons: strings, job_titles: strings,
+      fx: object(base: { type: :string }, as_of: { type: :string, format: :date },
+                 rates: { type: :object, additionalProperties: number })
+    )
+  end
+
   def user_attributes
     { email: { type: :string }, name: { type: :string }, role: { type: :string, enum: %w[hr_manager viewer] } }
   end
