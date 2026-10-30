@@ -11,6 +11,43 @@ const MAX_SEGMENTS = 4;
 const SAFE_METHODS = new Set(["GET", "HEAD"]);
 const PASS_THROUGH_HEADERS = ["content-type", "content-disposition"];
 
+/** Largest request body forwarded to Rails. API payloads are a few hundred bytes; this only stops abuse. */
+export const MAX_PROXY_BODY_BYTES = 1024 * 1024;
+
+class BodyTooLargeError extends Error {}
+
+/**
+ * Reads the request body as UTF-8 text, refusing more than `limit` bytes. `Content-Length` is checked up
+ * front (cheap rejection) but not trusted: the stream itself is counted and cancelled as soon as it
+ * exceeds the limit, so a chunked or lying request can't make the server buffer an unbounded body.
+ */
+export async function readBodyWithLimit(request: Request, limit = MAX_PROXY_BODY_BYTES): Promise<string> {
+  const declared = Number(request.headers.get("content-length"));
+  if (Number.isFinite(declared) && declared > limit) throw new BodyTooLargeError();
+  if (!request.body) return "";
+
+  const reader = request.body.getReader();
+  const chunks: Uint8Array[] = [];
+  let total = 0;
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    total += value.byteLength;
+    if (total > limit) {
+      await reader.cancel().catch(() => {});
+      throw new BodyTooLargeError();
+    }
+    chunks.push(value);
+  }
+  const bytes = new Uint8Array(total);
+  let offset = 0;
+  for (const chunk of chunks) {
+    bytes.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+  return new TextDecoder().decode(bytes);
+}
+
 function errorResponse(status: number, message: string) {
   return NextResponse.json({ success: false, errors: { base: [message] } }, { status });
 }
@@ -54,12 +91,22 @@ export async function handleProxyRequest(request: NextRequest, segments: string[
   const hasBody = !SAFE_METHODS.has(request.method);
   if (hasBody) headers.set("Content-Type", request.headers.get("content-type") ?? "application/json");
 
+  let body: string | undefined;
+  if (hasBody) {
+    try {
+      body = await readBodyWithLimit(request);
+    } catch (error) {
+      if (error instanceof BodyTooLargeError) return errorResponse(413, "Request body is too large.");
+      return errorResponse(400, "Couldn't read the request body.");
+    }
+  }
+
   let upstream: Response;
   try {
     upstream = await fetch(`${apiV1Url()}/${segments.join("/")}${request.nextUrl.search}`, {
       method: request.method,
       headers,
-      body: hasBody ? await request.text() : undefined,
+      body,
       cache: "no-store",
       redirect: "manual",
     });

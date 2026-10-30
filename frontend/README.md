@@ -89,7 +89,8 @@ invalidate them), insights 5 min (writes invalidate them). 4xx responses are not
   Browser code never sees it; client requests go to the same-origin proxy.
 - `/api/proxy/[...path]`: allow-listed roots (`employees`, `insights`, `lookups`, `me`), strict segment regex
   (no traversal), Origin must match Host on non-GET (CSRF), passes `content-type`/`content-disposition` through
-  (CSV), `Cache-Control: no-store`, clears the cookie on upstream 401.
+  (CSV), `Cache-Control: no-store`, clears the cookie on upstream 401, and rejects request bodies over 1 MB with
+  413 (declared `Content-Length` and the streamed byte count are both checked).
 - `?next=` redirects are restricted to same-site paths. Server actions are Origin-checked by Next.
 - No `dangerouslySetInnerHTML` anywhere (`react/no-danger` is an error); the shadcn chart was patched to expose
   colours as CSS variables instead of injecting a `<style>` tag.
