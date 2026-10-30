@@ -5,6 +5,7 @@ require 'rails_helper'
 RSpec.describe User do
   subject(:user) { build(:user) }
 
+  it { is_expected.to have_many(:salary_revisions).dependent(:restrict_with_error) }
   it { is_expected.to validate_presence_of(:name) }
   it { is_expected.to validate_length_of(:name).is_at_most(100) }
 

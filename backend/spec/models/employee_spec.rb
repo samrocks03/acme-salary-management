@@ -5,6 +5,8 @@ require 'rails_helper'
 RSpec.describe Employee do
   subject(:employee) { build(:employee) }
 
+  it { is_expected.to have_many(:salary_revisions).dependent(:delete_all) }
+
   describe 'validations' do
     it { is_expected.to validate_presence_of(:first_name) }
     it { is_expected.to validate_length_of(:first_name).is_at_most(50) }
@@ -69,6 +71,15 @@ RSpec.describe Employee do
 
       expect(employee.update(country_code: 'US')).to be(false)
       expect(employee.errors[:country_code]).to eq(["can't be changed"])
+    end
+  end
+
+  describe 'hired_on corrections' do
+    it 'cannot move the hire date after the first salary revision' do
+      employee = create(:employee, :with_history)
+
+      expect(employee.update(hired_on: employee.hired_on + 2.years)).to be(false)
+      expect(employee.errors[:hired_on].first).to start_with("can't be after the first salary revision")
     end
   end
 

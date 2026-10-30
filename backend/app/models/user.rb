@@ -6,6 +6,8 @@ class User < ApplicationRecord
 
   enum :role, { hr_manager: 'hr_manager', viewer: 'viewer' }, validate: true
 
+  has_many :salary_revisions, foreign_key: :changed_by_id, inverse_of: :changed_by, dependent: :restrict_with_error
+
   normalizes :name, with: TextNormalizer
 
   validates :name, presence: true, length: { maximum: 100 }

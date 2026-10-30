@@ -6,3 +6,11 @@ en:
           attributes:
             country_code:
               immutable: "can't be changed"
+            hired_on:
+              after_first_revision: "can't be after the first salary revision (%{date})"
+        salary_revision:
+          attributes:
+            effective_on:
+              in_future: "can't be in the future"
+              before_hire: "can't be before the hire date"
+              before_latest_revision: "can't be before the latest revision (%{date})"

@@ -135,6 +135,47 @@ ALTER SEQUENCE public.jwt_denylists_id_seq OWNED BY public.jwt_denylists.id;
 
 
 --
+-- Name: salary_revisions; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.salary_revisions (
+    id bigint NOT NULL,
+    employee_id bigint NOT NULL,
+    changed_by_id bigint NOT NULL,
+    amount numeric(14,2) NOT NULL,
+    previous_amount numeric(14,2),
+    currency character varying(3) NOT NULL,
+    effective_on date NOT NULL,
+    reason character varying NOT NULL,
+    note text,
+    created_at timestamp(6) without time zone NOT NULL,
+    CONSTRAINT salary_revisions_amount_range CHECK (((amount > (0)::numeric) AND (amount <= (100000000)::numeric))),
+    CONSTRAINT salary_revisions_note_length CHECK (((note IS NULL) OR (char_length(note) <= 500))),
+    CONSTRAINT salary_revisions_previous_amount_positive CHECK (((previous_amount IS NULL) OR (previous_amount > (0)::numeric))),
+    CONSTRAINT salary_revisions_reason_check CHECK (((reason)::text = ANY ((ARRAY['hire'::character varying, 'promotion'::character varying, 'annual_review'::character varying, 'market_adjustment'::character varying, 'correction'::character varying, 'other'::character varying])::text[])))
+);
+
+
+--
+-- Name: salary_revisions_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.salary_revisions_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: salary_revisions_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.salary_revisions_id_seq OWNED BY public.salary_revisions.id;
+
+
+--
 -- Name: schema_migrations; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -200,6 +241,13 @@ ALTER TABLE ONLY public.jwt_denylists ALTER COLUMN id SET DEFAULT nextval('publi
 
 
 --
+-- Name: salary_revisions id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.salary_revisions ALTER COLUMN id SET DEFAULT nextval('public.salary_revisions_id_seq'::regclass);
+
+
+--
 -- Name: users id; Type: DEFAULT; Schema: public; Owner: -
 --
 
@@ -228,6 +276,14 @@ ALTER TABLE ONLY public.employees
 
 ALTER TABLE ONLY public.jwt_denylists
     ADD CONSTRAINT jwt_denylists_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: salary_revisions salary_revisions_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.salary_revisions
+    ADD CONSTRAINT salary_revisions_pkey PRIMARY KEY (id);
 
 
 --
@@ -310,10 +366,47 @@ CREATE UNIQUE INDEX index_jwt_denylists_on_jti ON public.jwt_denylists USING btr
 
 
 --
+-- Name: index_salary_revisions_on_changed_by_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_salary_revisions_on_changed_by_id ON public.salary_revisions USING btree (changed_by_id);
+
+
+--
+-- Name: index_salary_revisions_on_effective_on; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_salary_revisions_on_effective_on ON public.salary_revisions USING btree (effective_on);
+
+
+--
+-- Name: index_salary_revisions_on_employee_latest; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_salary_revisions_on_employee_latest ON public.salary_revisions USING btree (employee_id, effective_on DESC, id DESC);
+
+
+--
 -- Name: index_users_on_email; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE UNIQUE INDEX index_users_on_email ON public.users USING btree (email);
+
+
+--
+-- Name: salary_revisions fk_rails_9251153654; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.salary_revisions
+    ADD CONSTRAINT fk_rails_9251153654 FOREIGN KEY (employee_id) REFERENCES public.employees(id) ON DELETE CASCADE;
+
+
+--
+-- Name: salary_revisions fk_rails_eb1482f261; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.salary_revisions
+    ADD CONSTRAINT fk_rails_eb1482f261 FOREIGN KEY (changed_by_id) REFERENCES public.users(id);
 
 
 --
@@ -323,6 +416,7 @@ CREATE UNIQUE INDEX index_users_on_email ON public.users USING btree (email);
 SET search_path TO "$user", public;
 
 INSERT INTO "schema_migrations" (version) VALUES
+('20261030120000'),
 ('20261030110000'),
 ('20261030100100'),
 ('20261030100000');

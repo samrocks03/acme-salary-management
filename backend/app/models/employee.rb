@@ -5,6 +5,8 @@ class Employee < ApplicationRecord
 
   enum :employment_type, { full_time: 'full_time', part_time: 'part_time', contractor: 'contractor' }, validate: true
 
+  has_many :salary_revisions, dependent: :delete_all
+
   attr_readonly :employee_code
 
   # Domain rule 8: plain text only, normalised before validation.
@@ -25,6 +27,7 @@ class Employee < ApplicationRecord
   validates :hired_on, presence: true
   validates :hired_on, comparison: { less_than_or_equal_to: -> { Date.current } }, allow_nil: true
   validate :country_code_unchanged, on: :update
+  validate :hired_on_not_after_first_revision, on: :update
 
   def country
     Reference::Country.find(country_code)
@@ -47,5 +50,13 @@ class Employee < ApplicationRecord
   # Domain rule 6: relocation means re-pricing in another currency — out of scope for the MVP.
   def country_code_unchanged
     errors.add(:country_code, :immutable) if will_save_change_to_country_code?
+  end
+
+  # Keeps domain rule 5 (revisions are effective on/after the hire date) true when hired_on is corrected.
+  def hired_on_not_after_first_revision
+    return unless hired_on && will_save_change_to_hired_on?
+
+    first = salary_revisions.minimum(:effective_on)
+    errors.add(:hired_on, :after_first_revision, date: first.iso8601) if first && hired_on > first
   end
 end
