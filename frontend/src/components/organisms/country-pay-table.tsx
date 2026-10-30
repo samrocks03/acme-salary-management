@@ -13,11 +13,11 @@ export function CountryPayTable({ rows }: { rows: CountryPay[] }) {
         <TableRow>
           <TableHead>Country</TableHead>
           <TableHead className="text-right">Headcount</TableHead>
-          <TableHead className="hidden text-right md:table-cell">Min</TableHead>
+          <TableHead className="hidden text-right 2xl:table-cell">Min</TableHead>
           <TableHead className="text-right">Median</TableHead>
-          <TableHead className="hidden text-right md:table-cell">Max</TableHead>
+          <TableHead className="hidden text-right 2xl:table-cell">Max</TableHead>
           <TableHead className="text-right">Median (USD)</TableHead>
-          <TableHead className="hidden text-right lg:table-cell">Payroll (USD)</TableHead>
+          <TableHead className="hidden text-right md:table-cell">Payroll (USD)</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -29,19 +29,19 @@ export function CountryPayTable({ rows }: { rows: CountryPay[] }) {
               </Link>
             </TableCell>
             <TableCell className="text-right tabular-nums">{formatNumber(row.headcount)}</TableCell>
-            <TableCell className="hidden text-right md:table-cell">
+            <TableCell className="hidden text-right 2xl:table-cell">
               <Money amount={row.min_salary} currency={row.currency} compact />
             </TableCell>
             <TableCell className="text-right">
               <Money amount={row.median_salary} currency={row.currency} compact />
             </TableCell>
-            <TableCell className="hidden text-right md:table-cell">
+            <TableCell className="hidden text-right 2xl:table-cell">
               <Money amount={row.max_salary} currency={row.currency} compact />
             </TableCell>
             <TableCell className="text-right font-medium">
               <Money amount={row.median_salary_usd} currency="USD" />
             </TableCell>
-            <TableCell className="hidden text-right lg:table-cell">
+            <TableCell className="hidden text-right md:table-cell">
               <Money amount={row.total_payroll_usd} currency="USD" compact />
             </TableCell>
           </TableRow>

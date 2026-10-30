@@ -2,7 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { AlertCircleIcon } from "lucide-react";
-import { useMemo } from "react";
+import { useId, useMemo } from "react";
 import { Controller, useForm, useWatch, type Resolver } from "react-hook-form";
 import { ChangePercent } from "@/components/atoms/change-percent";
 import { Money } from "@/components/atoms/money";
@@ -59,6 +59,8 @@ export function SalaryRevisionForm({
     mode: "onTouched",
   });
 
+  const uid = useId();
+  const fid = (name: string) => `${uid}-${name}`;
   const amount = useWatch({ control, name: "amount" });
   const note = useWatch({ control, name: "note" }) ?? "";
   const preview = changePercent(currentSalary, amount);
@@ -78,8 +80,7 @@ export function SalaryRevisionForm({
         </Alert>
       ) : null}
       <FieldGroup>
-        <FormField
-          id="amount"
+        <FormField id={fid("amount")}
           label={`New annual base salary (${currency})`}
           error={errors.amount?.message}
           required
@@ -91,7 +92,7 @@ export function SalaryRevisionForm({
           }
         >
           <Input
-            {...fieldAria("amount", errors.amount?.message, true)}
+            {...fieldAria(fid("amount"), errors.amount?.message, true)}
             type="number"
             inputMode="decimal"
             min={0}
@@ -101,22 +102,22 @@ export function SalaryRevisionForm({
           />
         </FormField>
         <div className="grid gap-5 sm:grid-cols-2">
-          <FormField id="effective_on" label="Effective date" error={errors.effective_on?.message} required>
+          <FormField id={fid("effective_on")} label="Effective date" error={errors.effective_on?.message} required>
             <Input
-              {...fieldAria("effective_on", errors.effective_on?.message)}
+              {...fieldAria(fid("effective_on"), errors.effective_on?.message)}
               type="date"
               min={minDate}
               max={today}
               {...register("effective_on")}
             />
           </FormField>
-          <FormField id="reason" label="Reason" error={errors.reason?.message} required>
+          <FormField id={fid("reason")} label="Reason" error={errors.reason?.message} required>
             <Controller
               control={control}
               name="reason"
               render={({ field }) => (
                 <Select value={field.value || undefined} onValueChange={field.onChange}>
-                  <SelectTrigger {...fieldAria("reason", errors.reason?.message)} className="w-full">
+                  <SelectTrigger {...fieldAria(fid("reason"), errors.reason?.message)} className="w-full">
                     <SelectValue placeholder="Select a reason" />
                   </SelectTrigger>
                   <SelectContent>
@@ -133,13 +134,12 @@ export function SalaryRevisionForm({
             />
           </FormField>
         </div>
-        <FormField
-          id="note"
+        <FormField id={fid("note")}
           label="Note"
           error={errors.note?.message}
           description={`${note.length}/${NOTE_MAX} characters`}
         >
-          <Textarea {...fieldAria("note", errors.note?.message, true)} rows={3} maxLength={NOTE_MAX} {...register("note")} />
+          <Textarea {...fieldAria(fid("note"), errors.note?.message, true)} rows={3} maxLength={NOTE_MAX} {...register("note")} />
         </FormField>
       </FieldGroup>
       <div className="flex justify-end gap-2">

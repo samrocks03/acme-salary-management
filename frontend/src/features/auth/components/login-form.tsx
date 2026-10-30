@@ -2,7 +2,7 @@
 
 import { AlertCircleIcon } from "lucide-react";
 import { useSearchParams } from "next/navigation";
-import { Suspense, useActionState } from "react";
+import { Suspense, useActionState, useId } from "react";
 import { fieldAria, FormField } from "@/components/molecules/form-field";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -23,6 +23,9 @@ export function LoginForm({ action }: { action: SignInAction }) {
   const [state, formAction, pending] = useActionState(action, {});
   const emailError = state.fieldErrors?.email?.[0];
   const passwordError = state.fieldErrors?.password?.[0];
+  const uid = useId();
+  const emailId = `${uid}-email`;
+  const passwordId = `${uid}-password`;
 
   return (
     <form action={formAction} noValidate className="flex flex-col gap-5">
@@ -36,9 +39,9 @@ export function LoginForm({ action }: { action: SignInAction }) {
         </Alert>
       ) : null}
       <FieldGroup>
-        <FormField id="email" label="Email" error={emailError}>
+        <FormField id={emailId} label="Email" error={emailError}>
           <Input
-            {...fieldAria("email", emailError)}
+            {...fieldAria(emailId, emailError)}
             name="email"
             type="email"
             autoComplete="username"
@@ -47,8 +50,8 @@ export function LoginForm({ action }: { action: SignInAction }) {
             autoFocus
           />
         </FormField>
-        <FormField id="password" label="Password" error={passwordError}>
-          <Input {...fieldAria("password", passwordError)} name="password" type="password" autoComplete="current-password" required />
+        <FormField id={passwordId} label="Password" error={passwordError}>
+          <Input {...fieldAria(passwordId, passwordError)} name="password" type="password" autoComplete="current-password" required />
         </FormField>
       </FieldGroup>
       <Button type="submit" size="lg" disabled={pending}>

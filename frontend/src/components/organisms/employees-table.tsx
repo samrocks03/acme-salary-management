@@ -36,7 +36,7 @@ const COLUMNS: Column[] = [
   { label: "Name", sortKey: "full_name" },
   { label: "Job title", sortKey: "job_title", className: "hidden lg:table-cell" },
   { label: "Department", sortKey: "department", className: "hidden md:table-cell" },
-  { label: "Country", sortKey: "country_code" },
+  { label: "Country", sortKey: "country_code", className: "hidden sm:table-cell" },
   { label: "Type", className: "hidden xl:table-cell" },
   { label: "Salary", sortKey: "salary", className: "text-right" },
   { label: "Hired", sortKey: "hired_on", className: "hidden sm:table-cell" },
@@ -97,7 +97,7 @@ export function EmployeesTable({ employees, sort, direction, onSort, canEdit, st
               </TableCell>
               <TableCell className="hidden lg:table-cell">{employee.job_title}</TableCell>
               <TableCell className="hidden md:table-cell">{employee.department}</TableCell>
-              <TableCell>
+              <TableCell className="hidden sm:table-cell">
                 <CountryLabel code={employee.country_code} name={employee.country_name} />
               </TableCell>
               <TableCell className="hidden xl:table-cell">

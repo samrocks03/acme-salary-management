@@ -2,7 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { AlertCircleIcon } from "lucide-react";
-import { useMemo } from "react";
+import { useId, useMemo } from "react";
 import { Controller, useForm, useWatch, type Resolver } from "react-hook-form";
 import { fieldAria, FormField } from "@/components/molecules/form-field";
 import type { Option } from "@/components/molecules/select-filter";
@@ -97,6 +97,9 @@ export function EmployeeForm({ mode, defaultValues, options, today, onSubmit, on
   });
 
   const err = (name: keyof EmployeeFormValues) => errors[name]?.message;
+  // Unique per form instance: Next keeps previous routes mounted (hidden), so fixed ids would collide.
+  const uid = useId();
+  const fid = (name: string) => `${uid}-${name}`;
 
   return (
     <form onSubmit={submit} noValidate className="flex max-w-2xl flex-col gap-6">
@@ -108,32 +111,32 @@ export function EmployeeForm({ mode, defaultValues, options, today, onSubmit, on
       ) : null}
 
       <FieldGroup className="grid gap-5 sm:grid-cols-2">
-        <FormField id="first_name" label="First name" error={err("first_name")} required>
-          <Input {...fieldAria("first_name", err("first_name"))} autoComplete="off" {...register("first_name")} />
+        <FormField id={fid("first_name")} label="First name" error={err("first_name")} required>
+          <Input {...fieldAria(fid("first_name"), err("first_name"))} autoComplete="off" {...register("first_name")} />
         </FormField>
-        <FormField id="last_name" label="Last name" error={err("last_name")} required>
-          <Input {...fieldAria("last_name", err("last_name"))} autoComplete="off" {...register("last_name")} />
+        <FormField id={fid("last_name")} label="Last name" error={err("last_name")} required>
+          <Input {...fieldAria(fid("last_name"), err("last_name"))} autoComplete="off" {...register("last_name")} />
         </FormField>
         <div className="sm:col-span-2">
-          <FormField id="email" label="Work email" error={err("email")} required>
-            <Input {...fieldAria("email", err("email"))} type="email" autoComplete="off" {...register("email")} />
+          <FormField id={fid("email")} label="Work email" error={err("email")} required>
+            <Input {...fieldAria(fid("email"), err("email"))} type="email" autoComplete="off" {...register("email")} />
           </FormField>
         </div>
-        <FormField id="job_title" label="Job title" error={err("job_title")} required>
-          <Input {...fieldAria("job_title", err("job_title"))} list="job-title-options" autoComplete="off" {...register("job_title")} />
-          <datalist id="job-title-options">
+        <FormField id={fid("job_title")} label="Job title" error={err("job_title")} required>
+          <Input {...fieldAria(fid("job_title"), err("job_title"))} list={fid("job-title-options")} autoComplete="off" {...register("job_title")} />
+          <datalist id={fid("job-title-options")}>
             {options.jobTitles.map((option) => (
               <option key={option.value} value={option.value} />
             ))}
           </datalist>
         </FormField>
-        <FormField id="department" label="Department" error={err("department")} required>
+        <FormField id={fid("department")} label="Department" error={err("department")} required>
           <Controller
             control={control}
             name="department"
             render={({ field }) => (
               <SelectField
-                id="department"
+                id={fid("department")}
                 value={field.value}
                 onChange={field.onChange}
                 options={options.departments}
@@ -143,13 +146,13 @@ export function EmployeeForm({ mode, defaultValues, options, today, onSubmit, on
             )}
           />
         </FormField>
-        <FormField id="employment_type" label="Employment type" error={err("employment_type")} required>
+        <FormField id={fid("employment_type")} label="Employment type" error={err("employment_type")} required>
           <Controller
             control={control}
             name="employment_type"
             render={({ field }) => (
               <SelectField
-                id="employment_type"
+                id={fid("employment_type")}
                 value={field.value}
                 onChange={field.onChange}
                 options={options.employmentTypes}
@@ -159,16 +162,15 @@ export function EmployeeForm({ mode, defaultValues, options, today, onSubmit, on
             )}
           />
         </FormField>
-        <FormField id="hired_on" label="Hire date" error={err("hired_on")} required>
-          <Input {...fieldAria("hired_on", err("hired_on"))} type="date" max={today} {...register("hired_on")} />
+        <FormField id={fid("hired_on")} label="Hire date" error={err("hired_on")} required>
+          <Input {...fieldAria(fid("hired_on"), err("hired_on"))} type="date" max={today} {...register("hired_on")} />
         </FormField>
       </FieldGroup>
 
       <FieldSeparator />
 
       <FieldGroup className="grid gap-5 sm:grid-cols-2">
-        <FormField
-          id="country_code"
+        <FormField id={fid("country_code")}
           label="Country"
           error={err("country_code")}
           required={isCreate}
@@ -179,7 +181,7 @@ export function EmployeeForm({ mode, defaultValues, options, today, onSubmit, on
             name="country_code"
             render={({ field }) => (
               <SelectField
-                id="country_code"
+                id={fid("country_code")}
                 value={field.value}
                 onChange={field.onChange}
                 options={countryOptions}
@@ -191,15 +193,14 @@ export function EmployeeForm({ mode, defaultValues, options, today, onSubmit, on
           />
         </FormField>
         {isCreate ? (
-          <FormField
-            id="salary"
+          <FormField id={fid("salary")}
             label={currency ? `Annual base salary (${currency})` : "Annual base salary"}
             error={err("salary")}
             required
             description={currency ? `Paid in ${currency}, the currency of the selected country.` : "Select a country to set the currency."}
           >
             <Input
-              {...fieldAria("salary", err("salary"), true)}
+              {...fieldAria(fid("salary"), err("salary"), true)}
               type="number"
               inputMode="decimal"
               min={0}
