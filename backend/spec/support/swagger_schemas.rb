@@ -118,6 +118,35 @@ module SwaggerSchemas
     }
   end
 
+  def number = { type: :number }
+  def integer = { type: :integer }
+
+  def object(properties)
+    { type: :object, required: properties.keys.map(&:to_s), properties: }
+  end
+
+  def insight(name, group_key = nil)
+    stats = { headcount: integer, min_salary: number, median_salary: number, avg_salary: number, max_salary: number }
+    case name
+    when :overview
+      object(headcount: integer, countries_count: integer, total_payroll_usd: number, avg_salary_usd: number,
+             median_salary_usd: number, fx_as_of: { type: :string, format: :date })
+    when :country_row
+      object(country_code: { type: :string }, country_name: { type: :string }, currency: { type: :string },
+             **stats, avg_salary_usd: number, median_salary_usd: number, total_payroll_usd: number)
+    when :grouped
+      object(currency: { type: :string },
+             rows: { type: :array, items: object(group_key => { type: :string }, **stats) })
+    when :distribution
+      object(currency: { type: :string },
+             buckets: { type: :array, items: object(min: number, max: number, count: integer) })
+    when :recent_changes
+      object(days: integer, revisions_count: integer, employees_count: integer, avg_change_percent: number,
+             by_reason: { type: :array,
+                          items: object(reason: { type: :string }, count: integer, avg_change_percent: number) })
+    end
+  end
+
   def user_attributes
     { email: { type: :string }, name: { type: :string }, role: { type: :string, enum: %w[hr_manager viewer] } }
   end

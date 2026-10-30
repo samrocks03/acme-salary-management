@@ -36,10 +36,12 @@ Metrics/MethodLength:
   Max: 15
   Exclude:
     - 'db/**/*.rb'
+    - 'spec/support/**/*.rb'
 
 Metrics/AbcSize:
   Exclude:
     - 'db/**/*.rb'
+    - 'spec/support/**/*.rb'
 
 Metrics/ClassLength:
   Enabled: false
@@ -62,6 +64,7 @@ RSpec/NestedGroups:
 RSpec/LetSetup:
   Exclude:
     - 'spec/requests/**/*.rb'
+    - 'spec/support/**/*.rb'
 RSpec/VariableName:
   Exclude:
     - 'spec/requests/**/*.rb'

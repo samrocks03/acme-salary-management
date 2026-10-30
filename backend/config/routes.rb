@@ -18,6 +18,15 @@ Rails.application.routes.draw do
       resources :employees, only: %i[index show create update destroy] do
         resources :salary_revisions, only: %i[index create]
       end
+
+      scope 'insights', controller: :insights, as: :insights do
+        get :overview
+        get :by_country
+        get :by_job_title
+        get :by_department
+        get :salary_distribution
+        get :recent_changes
+      end
     end
   end
 end

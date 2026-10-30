@@ -45,3 +45,27 @@ en:
     create:
       success:
         message: "Salary revision recorded successfully."
+  insight:
+    errors:
+      invalid_country:
+        detail: "is not a supported country"
+      invalid_days:
+        detail: "must be a whole number between 1 and 365"
+    overview:
+      success:
+        message: "Overview retrieved successfully."
+    by_country:
+      success:
+        message: "Pay by country retrieved successfully."
+    by_job_title:
+      success:
+        message: "Pay by job title retrieved successfully."
+    by_department:
+      success:
+        message: "Pay by department retrieved successfully."
+    salary_distribution:
+      success:
+        message: "Salary distribution retrieved successfully."
+    recent_changes:
+      success:
+        message: "Recent salary changes retrieved successfully."
