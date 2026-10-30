@@ -16,6 +16,7 @@ Rails.application.routes.draw do
       get 'me', to: 'me#show'
 
       resources :employees, only: %i[index show create update destroy] do
+        get :export, on: :collection
         resources :salary_revisions, only: %i[index create]
       end
 

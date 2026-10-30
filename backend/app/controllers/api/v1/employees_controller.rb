@@ -10,6 +10,13 @@ module Api
         render_result EmployeeService::Index.new(params, current_user).call
       end
 
+      def export
+        authorize Employee
+        result = EmployeeService::Export.new(params, current_user).call
+        send_data result.data[:content], type: 'text/csv; charset=utf-8', filename: result.data[:filename],
+                                         disposition: 'attachment'
+      end
+
       def show
         authorize Employee
         render_result EmployeeService::Show.new(params[:id], current_user).call

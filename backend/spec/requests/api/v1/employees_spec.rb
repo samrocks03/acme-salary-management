@@ -136,6 +136,50 @@ RSpec.describe 'api/v1/employees' do
     end
   end
 
+  path '/api/v1/employees/export' do
+    get('export employees as CSV') do
+      tags 'Employees'
+      produces 'text/csv'
+      security [{ bearer_auth: [] }]
+      description 'HR manager only. Same filters and sort as the list, unpaginated. ' \
+                  'Formula-like cells (= + - @ tab CR) are prefixed with a quote.'
+      parameter name: :q, in: :query, required: false, schema: { type: :string }
+      parameter name: :country, in: :query, required: false, schema: { type: :string }
+      parameter name: :department, in: :query, required: false, schema: { type: :string }
+      parameter name: :job_title, in: :query, required: false, schema: { type: :string }
+      parameter name: :employment_type, in: :query, required: false, schema: { type: :string }
+      parameter name: :sort, in: :query, required: false, schema: { type: :string }
+      parameter name: :direction, in: :query, required: false, schema: { type: :string }
+
+      response(200, 'CSV file') do
+        header 'Content-Disposition', schema: { type: :string },
+                                      description: 'attachment; filename="employees-YYYY-MM-DD.csv"'
+        let(:country) { 'IN' }
+        let!(:employees) { [create(:employee, country_code: 'IN'), create(:employee, :us)] }
+
+        before { travel_to Date.new(2026, 10, 30) }
+
+        run_test! do |response|
+          expect(response.media_type).to eq('text/csv')
+          expect(response.headers['Content-Disposition']).to include('attachment; filename="employees-2026-10-30.csv"')
+          expect(CSV.parse(response.body.delete_prefix("\uFEFF")).size).to eq(2) # header + 1 row
+        end
+      end
+
+      response(401, 'missing or invalid token') do
+        let(:Authorization) { 'Bearer not-a-real-token' }
+
+        run_test!
+      end
+
+      response(403, 'viewer role cannot export') do
+        let(:Authorization) { bearer_for(create(:user, :viewer)) }
+
+        run_test!
+      end
+    end
+  end
+
   path '/api/v1/employees/{id}' do
     parameter name: :id, in: :path, schema: { type: :integer }
 

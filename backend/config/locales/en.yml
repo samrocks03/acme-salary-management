@@ -38,6 +38,9 @@ en:
     destroy:
       success:
         message: "Employee %{name} deleted successfully."
+    export:
+      success:
+        message: "Employees exported successfully."
   salary_revision:
     index:
       success:

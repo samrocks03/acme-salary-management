@@ -79,6 +79,14 @@ RSpec/SharedContext:
 RSpec/EmptyExampleGroup:
   Exclude:
     - 'spec/requests/**/*.rb'
+# rswag's `path`/`response` blocks are example groups RuboCop doesn't recognise; these cops would
+# otherwise merge or flag hooks across different operations.
+RSpec/ScatteredSetup:
+  Exclude:
+    - 'spec/requests/**/*.rb'
+RSpec/ScatteredLet:
+  Exclude:
+    - 'spec/requests/**/*.rb'
 RSpec/DescribeClass:
   Exclude:
     - 'spec/requests/**/*.rb'
