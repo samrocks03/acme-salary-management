@@ -13,7 +13,7 @@ export function Money({ amount, currency, compact = false, className }: MoneyPro
   return (
     <span
       className={cn("tabular-nums", className)}
-      title={compact ? formatMoney(amount, currency) : undefined}
+      title={compact && amount != null ? formatMoney(amount, currency) : undefined}
     >
       {formatMoney(amount, currency, { compact })}
     </span>
