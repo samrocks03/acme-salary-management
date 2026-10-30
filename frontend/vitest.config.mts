@@ -2,19 +2,39 @@ import { fileURLToPath } from "node:url";
 import react from "@vitejs/plugin-react";
 import { defineConfig } from "vitest/config";
 
+const alias = { "@": fileURLToPath(new URL("./src", import.meta.url)) };
+
+/**
+ * Two projects keep the suite fast: pure logic (`*.test.ts`) runs in plain Node, and only component
+ * tests (`*.test.tsx`) pay for a jsdom environment.
+ */
 export default defineConfig({
   plugins: [react()],
-  resolve: {
-    alias: { "@": fileURLToPath(new URL("./src", import.meta.url)) },
-  },
+  resolve: { alias },
   test: {
-    environment: "jsdom",
-    globals: true,
-    setupFiles: ["./src/test/setup.ts"],
-    include: ["src/**/*.test.{ts,tsx}"],
-    css: false,
     restoreMocks: true,
     unstubGlobals: true,
     unstubEnvs: true,
+    projects: [
+      {
+        extends: true,
+        test: {
+          name: "unit",
+          environment: "node",
+          include: ["src/**/*.test.ts"],
+          setupFiles: ["./src/test/setup.node.ts"],
+        },
+      },
+      {
+        extends: true,
+        test: {
+          name: "dom",
+          environment: "jsdom",
+          include: ["src/**/*.test.tsx"],
+          setupFiles: ["./src/test/setup.ts"],
+          css: false,
+        },
+      },
+    ],
   },
 });
