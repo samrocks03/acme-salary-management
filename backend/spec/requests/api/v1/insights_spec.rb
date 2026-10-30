@@ -30,6 +30,16 @@ RSpec.describe 'api/v1/insights' do
       produces 'application/json'
       security [{ bearer_auth: [] }]
 
+      response(200, 'no employees yet: averages are null, counts and total are 0') do
+        schema SwaggerSchemas.envelope(SwaggerSchemas.insight(:overview))
+        before { Employee.delete_all }
+
+        run_test! do
+          expect(data).to eq('headcount' => 0, 'countries_count' => 0, 'total_payroll_usd' => 0.0,
+                             'avg_salary_usd' => nil, 'median_salary_usd' => nil, 'fx_as_of' => '2026-10-01')
+        end
+      end
+
       response(200, 'overview') do
         schema SwaggerSchemas.envelope(SwaggerSchemas.insight(:overview))
 
@@ -172,6 +182,16 @@ RSpec.describe 'api/v1/insights' do
                                  previous_amount: 200_000, amount: 206_000, effective_on: Date.new(2026, 1, 1))
         create(:salary_revision, employee: in_accountant, changed_by: hr, reason: 'hire',
                                  previous_amount: nil, amount: 3_000_000, effective_on: Date.new(2026, 10, 1))
+      end
+
+      response(200, 'no changes in the window: avg_change_percent is null') do
+        schema SwaggerSchemas.envelope(SwaggerSchemas.insight(:recent_changes))
+        let(:days) { 1 }
+
+        run_test! do
+          expect(data).to eq('days' => 1, 'revisions_count' => 0, 'employees_count' => 0,
+                             'avg_change_percent' => nil, 'by_reason' => [])
+        end
       end
 
       response(200, 'last 90 days by default') do

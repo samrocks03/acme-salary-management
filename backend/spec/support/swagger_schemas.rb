@@ -119,6 +119,8 @@ module SwaggerSchemas
   end
 
   def number = { type: :number }
+  # null = no data (an average or median over zero rows), never a real 0
+  def nullable_number = { type: :number, nullable: true }
   def integer = { type: :integer }
 
   def object(properties)
@@ -129,8 +131,9 @@ module SwaggerSchemas
     stats = { headcount: integer, min_salary: number, median_salary: number, avg_salary: number, max_salary: number }
     case name
     when :overview
-      object(headcount: integer, countries_count: integer, total_payroll_usd: number, avg_salary_usd: number,
-             median_salary_usd: number, fx_as_of: { type: :string, format: :date })
+      object(headcount: integer, countries_count: integer, total_payroll_usd: number,
+             avg_salary_usd: nullable_number, median_salary_usd: nullable_number,
+             fx_as_of: { type: :string, format: :date })
     when :country_row
       object(country_code: { type: :string }, country_name: { type: :string }, currency: { type: :string },
              **stats, avg_salary_usd: number, median_salary_usd: number, total_payroll_usd: number)
@@ -141,7 +144,7 @@ module SwaggerSchemas
       object(currency: { type: :string },
              buckets: { type: :array, items: object(min: number, max: number, count: integer) })
     when :recent_changes
-      object(days: integer, revisions_count: integer, employees_count: integer, avg_change_percent: number,
+      object(days: integer, revisions_count: integer, employees_count: integer, avg_change_percent: nullable_number,
              by_reason: { type: :array,
                           items: object(reason: { type: :string }, count: integer, avg_change_percent: number) })
     end

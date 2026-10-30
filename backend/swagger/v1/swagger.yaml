@@ -524,8 +524,10 @@ paths:
                         type: number
                       avg_salary_usd:
                         type: number
+                        nullable: true
                       median_salary_usd:
                         type: number
+                        nullable: true
                       fx_as_of:
                         type: string
                         format: date
@@ -901,6 +903,7 @@ paths:
                         type: integer
                       avg_change_percent:
                         type: number
+                        nullable: true
                       by_reason:
                         type: array
                         items:
