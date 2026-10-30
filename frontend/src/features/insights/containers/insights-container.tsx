@@ -11,6 +11,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { lookupOptions } from "@/features/lookups/options";
 import { findCountry, lookupsQuery } from "@/features/lookups/queries";
 import { browserApiClient } from "@/lib/api/browser";
+import { writeUrl } from "@/lib/history";
 import { cn } from "@/lib/utils";
 import {
   distributionQuery,
@@ -62,8 +63,9 @@ export function InsightsContainer() {
   const byDepartment = useQuery({ ...payByDepartmentQuery(browserApiClient, country), ...smooth });
   const distribution = useQuery({ ...distributionQuery(browserApiClient, country), ...smooth });
 
+  // A discrete choice: push, so Back returns to the previous country (the URL is the state; see writeUrl).
   function selectCountry(code: string | undefined) {
-    window.history.replaceState(null, "", code ? `${INSIGHTS_PATH}?country=${code}` : INSIGHTS_PATH);
+    writeUrl(code ? `${INSIGHTS_PATH}?country=${code}` : INSIGHTS_PATH, "push");
   }
 
   const scope = selected

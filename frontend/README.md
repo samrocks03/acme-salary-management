@@ -75,10 +75,12 @@ All API knowledge lives in `src/lib/api/*` and `src/features/*/api.ts`.
    with the *same* `queryOptions` but the browser `ApiClient` (`/api/proxy/*`). Keys match, so there is no
    client waterfall on first paint.
 4. List state lives in the URL. Server and browser parse it with the same function
-   (`features/employees/params.ts`) so they derive identical query keys. Filter/sort/page changes update the URL
-   with `history.replaceState` (Next syncs this into `useSearchParams`) rather than `router.replace`: the client
-   already owns the data, so an RSC round-trip would only re-prefetch it. Lists use `keepPreviousData`; search is
-   debounced (300 ms).
+   (`features/employees/params.ts`) so they derive identical query keys. Containers derive their state from
+   `useSearchParams`, so Back/Forward restore it. Changes are written with the native History API
+   (`lib/history.ts`, which Next syncs into `useSearchParams`) rather than the router: the client already owns
+   the data, so an RSC round-trip would only re-prefetch it. Page, sort and select-filter changes **push** a
+   history entry (Back steps through them); debounced search typing and the correction to a server-clamped
+   page **replace** it. Lists use `keepPreviousData`; search is debounced (300 ms).
 5. Mutations go through the proxy, invalidate the narrowest keys (`employeeKeys.detail(id)`, `employeeKeys.lists()`,
    `salaryRevisionKeys.list(id)`, `insightKeys.all`, and `lookupKeys.all` for employee writes) and map API 422 errors onto form fields.
 

@@ -3,6 +3,7 @@ import {
   applyListChange,
   exportQuery,
   hasActiveFilters,
+  historyModeFor,
   parseEmployeeListParams,
   reconcilePage,
   serializeEmployeeListParams,
@@ -101,5 +102,19 @@ describe("reconcilePage", () => {
   it("goes back to page 1 when the result set is empty", () => {
     expect(reconcilePage(parse("q=zzz&page=4"), meta(4, 0))).toMatchObject({ q: "zzz", page: 1 });
     expect(reconcilePage(parse("q=zzz"), meta(1, 0))).toBeNull();
+  });
+});
+
+describe("historyModeFor", () => {
+  it("replaces the entry while search text is being typed (debounced), so Back doesn't replay keystrokes", () => {
+    expect(historyModeFor({ q: "ash" })).toBe("replace");
+    expect(historyModeFor({ q: undefined })).toBe("replace");
+  });
+
+  it("pushes an entry for discrete steps: paging, sorting, select filters, clearing filters", () => {
+    expect(historyModeFor({ page: 2 })).toBe("push");
+    expect(historyModeFor({ sort: "salary", direction: "desc" })).toBe("push");
+    expect(historyModeFor({ country: "IN" })).toBe("push");
+    expect(historyModeFor({ q: undefined, country: undefined, department: undefined })).toBe("push");
   });
 });

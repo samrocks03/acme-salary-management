@@ -12,10 +12,12 @@ import { Button } from "@/components/ui/button";
 import { lookupOptions } from "@/features/lookups/options";
 import { lookupsQuery } from "@/features/lookups/queries";
 import { browserApiClient } from "@/lib/api/browser";
+import { writeUrl } from "@/lib/history";
 import { employeesExportUrl } from "../api";
 import {
   applyListChange,
   hasActiveFilters,
+  historyModeFor,
   parseEmployeeListParams,
   reconcilePage,
   serializeEmployeeListParams,
@@ -33,8 +35,10 @@ interface EmployeesListContainerProps {
 
 /**
  * Wires URL state ↔ TanStack Query ↔ presentational organisms.
- * URL updates use the native History API (which Next syncs into useSearchParams) instead of
- * router.replace: the client already owns the data, so a server round-trip would only re-prefetch it.
+ * The URL is the only state: params are derived from useSearchParams, so Back/Forward (which Next syncs
+ * into it) restore filters, sort and page with no extra bookkeeping. URL updates use the native History API
+ * (`writeUrl`) instead of the router: the client already owns the data, so a server round-trip would only
+ * re-prefetch it. Discrete steps push history entries; debounced search typing replaces (`historyModeFor`).
  */
 export function EmployeesListContainer({ canEdit, canExport }: EmployeesListContainerProps) {
   const searchParams = useSearchParams();
@@ -48,7 +52,7 @@ export function EmployeesListContainer({ canEdit, canExport }: EmployeesListCont
   const navigate = useCallback(
     (change: Partial<EmployeeListParams>) => {
       const next = applyListChange(params, change);
-      window.history.replaceState(null, "", `${LIST_PATH}${serializeEmployeeListParams(next)}`);
+      writeUrl(`${LIST_PATH}${serializeEmployeeListParams(next)}`, historyModeFor(change));
     },
     [params],
   );
@@ -63,7 +67,7 @@ export function EmployeesListContainer({ canEdit, canExport }: EmployeesListCont
     if (list.data.meta.page === corrected.page) {
       queryClient.setQueryData(employeeListQuery(browserApiClient, corrected).queryKey, list.data);
     }
-    window.history.replaceState(null, "", `${LIST_PATH}${serializeEmployeeListParams(corrected)}`);
+    writeUrl(`${LIST_PATH}${serializeEmployeeListParams(corrected)}`, "replace");
   }, [list.data, list.isPlaceholderData, params, queryClient]);
 
   return (
