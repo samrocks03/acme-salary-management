@@ -1,6 +1,17 @@
 # Data fetching
 
-Contents: 1. ApiClient · 2. Fetchers · 3. Key factory + queryOptions · 4. Server prefetch · 5. Client hooks · 6. Mutations · 7. Proxy & session
+Contents: 0. Exemplars · 1. ApiClient · 2. Fetchers · 3. Key factory + queryOptions · 4. Server prefetch · 5. Client hooks · 6. Mutations · 7. Proxy & session
+
+## 0. Exemplars — copy the closest one
+| Need | Exemplar (under `frontend/src/`) |
+|---|---|
+| Feature module layout | `features/employees/` — `types.ts`, `api.ts`, `queries.ts`, `mutations.ts`, `params.ts`, `schemas.ts`, `sections/`, `containers/` |
+| Server section (prefetch + hydrate) | `features/employees/sections/employees-list-section.tsx` |
+| Client container (hooks → organism) | `features/employees/containers/employees-list-container.tsx` |
+| Mutation with narrow invalidation | `features/salary-revisions/mutations.ts`, `features/employees/mutations.ts` |
+| URL params parse/serialize | `features/employees/params.ts` |
+| HTTP clients | `lib/api/server.ts` (`getServerApiClient`), `lib/api/browser.ts` (`browserApiClient`), `lib/api/http.ts` |
+| BFF proxy logic (tested) | `lib/api/proxy-handler.ts` (+ `app/api/proxy/[...path]/route.ts`) |
 
 ## 1. ApiClient — one interface, two implementations
 ```ts
@@ -12,9 +23,10 @@ export interface ApiClient {
   delete<T>(path: string): Promise<T>;
 }
 ```
-- `src/lib/api/server.ts` (`import 'server-only'`): base `process.env.API_URL + '/api/v1'`, reads the
-  `acme_session` cookie, sends `Authorization: Bearer`.
-- `src/lib/api/browser.ts`: base `/api/proxy`, `credentials: 'same-origin'`.
+- `src/lib/api/server.ts` (`import 'server-only'`): `getServerApiClient()` — React-`cache`d per request, base
+  `API_URL + '/api/v1'`, `Authorization: Bearer <token from the httpOnly cookie>`.
+- `src/lib/api/browser.ts`: `browserApiClient` — base `/api/proxy` (same origin, cookie sent automatically).
+- Both are built by `createHttpClient` in `src/lib/api/http.ts`; fetchers accept an `AbortSignal`.
 - Both throw `ApiError { status, errors }` on non-2xx so forms can map 422 field errors.
 
 ## 2. Fetchers take the client — `src/features/employees/api.ts`
@@ -32,28 +44,33 @@ Hierarchical keys make invalidation precise (`lists()` hits every page/filter co
 export const employeeKeys = {
   all: ['employees'] as const,
   lists: () => [...employeeKeys.all, 'list'] as const,
-  list: (p: EmployeeListParams) => [...employeeKeys.lists(), p] as const,
-  detail: (id: string) => [...employeeKeys.all, 'detail', id] as const,
+  list: (params: EmployeeListParams) => [...employeeKeys.lists(), params] as const,
+  details: () => [...employeeKeys.all, 'detail'] as const,
+  detail: (id: string) => [...employeeKeys.details(), id] as const,
 };
 
 export const employeeListQuery = (client: ApiClient, params: EmployeeListParams) =>
   queryOptions({
     queryKey: employeeKeys.list(params),
-    queryFn: () => listEmployees(client, params),
-    placeholderData: keepPreviousData, // pagination doesn't flash empty
+    queryFn: ({ signal }) => listEmployees(client, params, signal), // aborted when params change
   });
 ```
 Lookups (countries, departments…) use `staleTime: Infinity` — they change on deploy, not per request.
 
 ## 4. Server prefetch — inside the Suspense boundary
 ```tsx
-async function EmployeesSection({ searchParams }: { searchParams: Promise<SearchParams> }) {
-  const params = parseEmployeeParams(await searchParams);
-  const qc = getQueryClient();           // new per request on the server
-  await qc.prefetchQuery(employeeListQuery(serverApi(), params));
+/** Dynamic hole of the /employees page: prefetch on the server, hydrate the client container. */
+export async function EmployeesListSection({ searchParams }: EmployeesListSectionProps) {
+  const [user, api, rawParams] = await Promise.all([requireUser(), getServerApiClient(), searchParams]);
+  const params = parseEmployeeListParams(toURLSearchParams(rawParams));
+  const queryClient = getQueryClient(); // new per request on the server
+  await Promise.all([
+    queryClient.prefetchQuery(employeeListQuery(api, params)),
+    queryClient.prefetchQuery(lookupsQuery(api)),
+  ]);
   return (
-    <HydrationBoundary state={dehydrate(qc)}>
-      <EmployeesContainer initialParams={params} />
+    <HydrationBoundary state={dehydrate(queryClient)}>
+      <EmployeesListContainer canEdit={can(user.role, 'employee:update')} canExport={can(user.role, 'employee:export')} />
     </HydrationBoundary>
   );
 }
@@ -63,7 +80,8 @@ async function EmployeesSection({ searchParams }: { searchParams: Promise<Search
 ```tsx
 'use client';
 export function useEmployees(params: EmployeeListParams) {
-  return useQuery(employeeListQuery(browserApi, params)); // same key → hydrated, no refetch within staleTime
+  return useQuery({ ...employeeListQuery(browserApiClient, params), placeholderData: keepPreviousData });
+  // same key as the server prefetch → hydrated, no refetch within staleTime; keepPreviousData avoids empty flashes
 }
 ```
 
@@ -72,7 +90,7 @@ export function useEmployees(params: EmployeeListParams) {
 export function useRecordSalaryRevision(employeeId: string) {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (input: SalaryRevisionInput) => createSalaryRevision(browserApi, employeeId, input),
+    mutationFn: (input: SalaryRevisionInput) => createSalaryRevision(browserApiClient, employeeId, input),
     onSuccess: () => {
       toast.success('Salary change recorded');
       return Promise.all([

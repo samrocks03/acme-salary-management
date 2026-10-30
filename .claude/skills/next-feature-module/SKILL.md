@@ -26,7 +26,7 @@ should keep all three true:
    state for filters/sort/page. Patterns: `references/rendering.md`.
 4. **Components** — reuse before creating; place new ones at the right atomic level.
    Rules and the existing inventory: `references/components.md`.
-5. **Permissions** — `can(role, action)` for affordances, `requireRole('hr_manager')` for write routes.
+5. **Permissions** — `can(role, action)` for affordances, `requirePermission(action)` for write routes.
    The API enforces anyway; UI gating is for clarity, not security.
 6. **Tests** — `references/testing.md`.
 7. **Verify** with `scripts/check.sh` (lint, typecheck, vitest, build). Commit only `frontend/` paths with a

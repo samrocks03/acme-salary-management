@@ -8,7 +8,7 @@ export default function EmployeesPage({ searchParams }: PageProps<'/employees'>)
     <>
       <PageHeader title="Employees" description="Search, filter and manage salaries" />   {/* static shell */}
       <Suspense fallback={<EmployeesTableSkeleton />}>
-        <EmployeesSection searchParams={searchParams} />                                  {/* dynamic */}
+        <EmployeesListSection searchParams={searchParams} />                              {/* dynamic */}
       </Suspense>
     </>
   );
@@ -22,15 +22,17 @@ export default function EmployeesPage({ searchParams }: PageProps<'/employees'>)
 ## URL is the state
 Filters, sort, direction, page and the insights country live in the query string:
 shareable links, working back button, and the server can prefetch exactly what the client will ask for.
-- Parse/serialize with one helper per feature (`parseEmployeeParams` / `toSearchParams`) with defaults and
-  clamping (`per_page` 1–100), so server and client agree.
-- Update with `router.replace(…, { scroll: false })` inside `startTransition`; debounce text search 300 ms;
-  reset `page` to 1 whenever a filter changes.
+- Parse/serialize with one helper per feature (`parseEmployeeListParams` / `serializeEmployeeListParams` in
+  `features/employees/params.ts`) with defaults and clamping (`per_page` 1–100), so server and client agree.
+- The list container keeps params in state and mirrors them to the URL with `history.replaceState` (no RSC
+  round-trip, so the list isn't fetched twice); debounce text search 300 ms; `applyListChange` resets `page`
+  to 1 whenever a filter changes.
+- Server-rendered forms stay disabled until hydrated (`hooks/use-hydrated.ts`) so early typing isn't lost.
 
 ## Role gating
 ```tsx
 // write routes (e.g. /employees/new, /employees/[id]/edit)
-const user = await requireRole('hr_manager');   // renders the 403 page for viewers
+const user = await requirePermission('employee:create');   // src/lib/session.ts — calls forbidden() for viewers
 ```
 - Affordances: `{can(user.role, 'employee:create') && <Button>Add employee</Button>}` — `can` in
   `src/lib/permissions.ts` is the only place that knows the role → action matrix.
