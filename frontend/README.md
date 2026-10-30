@@ -40,6 +40,8 @@ src/
     mutations.ts            useMutation hooks with narrow invalidation + toasts
     schemas.ts              zod rules mirroring the API's validations
     sections/               async Server Components: auth check + prefetch + HydrationBoundary
+    loaders.ts              server-only loaders shared by sections (e.g. loadEmployeeOr404)
+    components/             server-safe presentational pieces specific to the feature
     containers/             'use client' components wiring hooks/URL state to organisms
   lib/
     api/                    ApiClient interface, http core, server client, browser client, proxy handler
@@ -73,14 +75,17 @@ All API knowledge lives in `src/lib/api/*` and `src/features/*/api.ts`.
    with the *same* `queryOptions` but the browser `ApiClient` (`/api/proxy/*`). Keys match, so there is no
    client waterfall on first paint.
 4. List state lives in the URL. Server and browser parse it with the same function
-   (`features/employees/params.ts`) so they derive identical query keys. Filter/sort/page changes update the URL
-   with `history.replaceState` (Next syncs this into `useSearchParams`) rather than `router.replace`: the client
-   already owns the data, so an RSC round-trip would only re-prefetch it. Lists use `keepPreviousData`; search is
-   debounced (300 ms).
+   (`features/employees/params.ts`) so they derive identical query keys. Containers derive their state from
+   `useSearchParams`, so Back/Forward restore it. Changes are written with the native History API
+   (`lib/history.ts`, which Next syncs into `useSearchParams`) rather than the router: the client already owns
+   the data, so an RSC round-trip would only re-prefetch it. Page, sort and select-filter changes **push** a
+   history entry (Back steps through them); debounced search typing and the correction to a server-clamped
+   page **replace** it. Lists use `keepPreviousData`; search is debounced (300 ms).
 5. Mutations go through the proxy, invalidate the narrowest keys (`employeeKeys.detail(id)`, `employeeKeys.lists()`,
-   `salaryRevisionKeys.list(id)`, `insightKeys.all`) and map API 422 errors onto form fields.
+   `salaryRevisionKeys.list(id)`, `insightKeys.all`, and `lookupKeys.all` for employee writes) and map API 422 errors onto form fields.
 
-`staleTime`: 60 s default, lookups `Infinity`, insights 5 min (writes invalidate them). 4xx responses are not retried.
+`staleTime`: 60 s default, lookups 5 min (job titles/departments come from employee data, so employee writes
+invalidate them), insights 5 min (writes invalidate them). 4xx responses are not retried.
 
 ## Security
 
@@ -88,12 +93,14 @@ All API knowledge lives in `src/lib/api/*` and `src/features/*/api.ts`.
   Browser code never sees it; client requests go to the same-origin proxy.
 - `/api/proxy/[...path]`: allow-listed roots (`employees`, `insights`, `lookups`, `me`), strict segment regex
   (no traversal), Origin must match Host on non-GET (CSRF), passes `content-type`/`content-disposition` through
-  (CSV), `Cache-Control: no-store`, clears the cookie on upstream 401.
+  (CSV), `Cache-Control: no-store`, clears the cookie on upstream 401, and rejects request bodies over 1 MB with
+  413 (declared `Content-Length` and the streamed byte count are both checked).
 - `?next=` redirects are restricted to same-site paths. Server actions are Origin-checked by Next.
 - No `dangerouslySetInnerHTML` anywhere (`react/no-danger` is an error); the shadcn chart was patched to expose
   colours as CSS variables instead of injecting a `<style>` tag.
 - Headers on every response: CSP (no nonces, to keep PPR static shells; see `src/lib/security-headers.ts`),
-  `X-Frame-Options: DENY`, `nosniff`, `Referrer-Policy`, `Permissions-Policy`; `poweredByHeader: false`.
+  `X-Frame-Options: DENY`, `nosniff`, `Referrer-Policy`, `Permissions-Policy`, and HSTS (production builds only);
+  `poweredByHeader: false`.
 - Roles: `can(role, action)` hides write affordances from viewers; write routes call `requirePermission()` which
   renders `forbidden.tsx`. Because the check runs inside a streamed Suspense boundary the HTTP status stays 200
   while the 403 UI renders. The API (Pundit) remains the real enforcement point.

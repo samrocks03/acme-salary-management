@@ -17,26 +17,42 @@ interface SearchInputProps {
 export function SearchInput({ value, onSearch, placeholder = "Search…", label = "Search", delay = 300 }: SearchInputProps) {
   const [draft, setDraft] = useState(value);
   const [syncedValue, setSyncedValue] = useState(value);
+  // The last query we reported, so its echo back through `value` isn't mistaken for an external change.
+  const [emitted, setEmitted] = useState<string | null>(null);
+  const [externalChanges, setExternalChanges] = useState(0);
   const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
-  // External resets (e.g. "Clear filters") win over the local draft — adjusted during render, not in an effect.
+  // External changes (e.g. "Clear filters", Back/Forward) win over the local draft — adjusted during
+  // render, not in an effect. Our own echo leaves the draft alone: the user may already be typing on.
   if (value !== syncedValue) {
     setSyncedValue(value);
-    setDraft(value);
+    if (value === emitted) {
+      setEmitted(null);
+    } else {
+      setDraft(value);
+      setExternalChanges((count) => count + 1);
+    }
   }
 
+  // ...and drop a pending search, which would otherwise re-apply the old text on top of the new URL.
+  useEffect(() => clearTimeout(timer.current), [externalChanges]);
   useEffect(() => () => clearTimeout(timer.current), []);
+
+  function report(next: string) {
+    setEmitted(next);
+    onSearch(next);
+  }
 
   function schedule(next: string) {
     setDraft(next);
     clearTimeout(timer.current);
-    timer.current = setTimeout(() => onSearch(next.trim()), delay);
+    timer.current = setTimeout(() => report(next.trim()), delay);
   }
 
   function clear() {
     clearTimeout(timer.current);
     setDraft("");
-    onSearch("");
+    report("");
   }
 
   return (

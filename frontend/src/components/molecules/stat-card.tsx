@@ -9,12 +9,13 @@ interface StatCardProps {
   icon?: LucideIcon;
 }
 
+/** A KPI tile. A missing value (`null`/`undefined`, e.g. an average with no data) renders as "—". */
 export function StatCard({ label, value, hint, icon: Icon }: StatCardProps) {
   return (
     <Card size="sm">
       <CardHeader>
         <CardDescription>{label}</CardDescription>
-        <CardTitle className="text-2xl font-semibold tabular-nums">{value}</CardTitle>
+        <CardTitle className="text-2xl font-semibold tabular-nums">{value ?? "—"}</CardTitle>
         {Icon ? (
           <CardAction>
             <Icon aria-hidden className="size-4 text-muted-foreground" />

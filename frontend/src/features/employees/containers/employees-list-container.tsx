@@ -1,9 +1,9 @@
 "use client";
 
-import { keepPreviousData, useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useQuery, useQueryClient } from "@tanstack/react-query";
 import { DownloadIcon } from "lucide-react";
 import { useSearchParams } from "next/navigation";
-import { useCallback, useMemo } from "react";
+import { useCallback, useEffect, useMemo } from "react";
 import { QueryError } from "@/components/molecules/query-error";
 import { PaginationControls } from "@/components/molecules/pagination-controls";
 import { EmployeeFilters } from "@/components/organisms/employee-filters";
@@ -12,11 +12,14 @@ import { Button } from "@/components/ui/button";
 import { lookupOptions } from "@/features/lookups/options";
 import { lookupsQuery } from "@/features/lookups/queries";
 import { browserApiClient } from "@/lib/api/browser";
+import { writeUrl } from "@/lib/history";
 import { employeesExportUrl } from "../api";
 import {
   applyListChange,
   hasActiveFilters,
+  historyModeFor,
   parseEmployeeListParams,
+  reconcilePage,
   serializeEmployeeListParams,
   toggleSort,
 } from "../params";
@@ -32,13 +35,16 @@ interface EmployeesListContainerProps {
 
 /**
  * Wires URL state ↔ TanStack Query ↔ presentational organisms.
- * URL updates use the native History API (which Next syncs into useSearchParams) instead of
- * router.replace: the client already owns the data, so a server round-trip would only re-prefetch it.
+ * The URL is the only state: params are derived from useSearchParams, so Back/Forward (which Next syncs
+ * into it) restore filters, sort and page with no extra bookkeeping. URL updates use the native History API
+ * (`writeUrl`) instead of the router: the client already owns the data, so a server round-trip would only
+ * re-prefetch it. Discrete steps push history entries; debounced search typing replaces (`historyModeFor`).
  */
 export function EmployeesListContainer({ canEdit, canExport }: EmployeesListContainerProps) {
   const searchParams = useSearchParams();
   const params = useMemo(() => parseEmployeeListParams(new URLSearchParams(searchParams)), [searchParams]);
 
+  const queryClient = useQueryClient();
   const list = useQuery({ ...employeeListQuery(browserApiClient, params), placeholderData: keepPreviousData });
   const lookups = useQuery(lookupsQuery(browserApiClient));
   const options = useMemo(() => lookupOptions(lookups.data), [lookups.data]);
@@ -46,10 +52,23 @@ export function EmployeesListContainer({ canEdit, canExport }: EmployeesListCont
   const navigate = useCallback(
     (change: Partial<EmployeeListParams>) => {
       const next = applyListChange(params, change);
-      window.history.replaceState(null, "", `${LIST_PATH}${serializeEmployeeListParams(next)}`);
+      writeUrl(`${LIST_PATH}${serializeEmployeeListParams(next)}`, historyModeFor(change));
     },
     [params],
   );
+
+  // The API clamps an out-of-range page (stale link, list shrank after a delete) and reports the page it
+  // served. Make the URL agree — replace, not push: it's a correction, not a step the user took — and seed
+  // the corrected key with the data we already have so it isn't fetched again.
+  useEffect(() => {
+    if (!list.data || list.isPlaceholderData) return;
+    const corrected = reconcilePage(params, list.data.meta);
+    if (!corrected) return;
+    if (list.data.meta.page === corrected.page) {
+      queryClient.setQueryData(employeeListQuery(browserApiClient, corrected).queryKey, list.data);
+    }
+    writeUrl(`${LIST_PATH}${serializeEmployeeListParams(corrected)}`, "replace");
+  }, [list.data, list.isPlaceholderData, params, queryClient]);
 
   return (
     <div className="flex flex-col gap-4">

@@ -2,12 +2,17 @@ import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
 import { lookupsQuery } from "@/features/lookups/queries";
 import { getServerApiClient } from "@/lib/api/server";
+import { todayUtcIso } from "@/lib/format";
 import { getQueryClient } from "@/lib/query-client";
 import { requirePermission } from "@/lib/session";
 import { CreateEmployeeContainer, EditEmployeeContainer } from "../containers/employee-form-container";
-import { loadEmployeeOr404 } from "./employee-detail-section";
+import { loadEmployeeOr404 } from "../loaders";
 
-/** Viewers get the 403 page (forbidden()) before any form is rendered. */
+/**
+ * Viewers get the 403 page (forbidden()) before any form is rendered.
+ * `today` (UTC business date) is computed here, once per request and after the cookie read, and passed down
+ * so the server-rendered `max`/validation and the hydrated client agree.
+ */
 export async function NewEmployeeSection() {
   await requirePermission("employee:create");
   const api = await getServerApiClient();
@@ -15,7 +20,7 @@ export async function NewEmployeeSection() {
   await queryClient.prefetchQuery(lookupsQuery(api));
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>
-      <CreateEmployeeContainer />
+      <CreateEmployeeContainer today={todayUtcIso()} />
     </HydrationBoundary>
   );
 }
@@ -26,7 +31,7 @@ export async function EditEmployeeSection({ params }: { params: Promise<{ id: st
   await queryClient.prefetchQuery(lookupsQuery(api));
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>
-      <EditEmployeeContainer id={id} />
+      <EditEmployeeContainer id={id} today={todayUtcIso()} />
     </HydrationBoundary>
   );
 }

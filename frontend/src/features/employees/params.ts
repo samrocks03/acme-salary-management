@@ -1,3 +1,5 @@
+import type { PaginationMeta } from "@/lib/api/types";
+import type { HistoryMode } from "@/lib/history";
 import {
   EMPLOYEE_SORT_KEYS,
   EMPLOYMENT_TYPES,
@@ -86,6 +88,26 @@ export function applyListChange(
   for (const key of FILTER_KEYS) if (!next[key]) delete next[key];
   if (change.page === undefined) next.page = 1;
   return next;
+}
+
+/**
+ * The API clamps `page` to `1..total_pages` and echoes the page it served in `meta.page`. When that differs
+ * from the URL (stale link, list shrank after a delete), returns the params the URL should hold instead;
+ * `null` when they already agree. Also clamps locally in case the server echoes an out-of-range page.
+ */
+export function reconcilePage(current: EmployeeListParams, meta: PaginationMeta): EmployeeListParams | null {
+  const page = Math.min(Math.max(meta.page, 1), Math.max(meta.total_pages, 1));
+  return page === current.page ? null : { ...current, page };
+}
+
+/**
+ * How a list change is written to history. Discrete steps (page, sort, a select filter, "Clear filters")
+ * push an entry so Back walks through them; debounced search typing replaces the current entry so Back
+ * doesn't replay every pause in typing.
+ */
+export function historyModeFor(change: Partial<EmployeeListParams>): HistoryMode {
+  const keys = Object.keys(change);
+  return keys.length > 0 && keys.every((key) => key === "q") ? "replace" : "push";
 }
 
 /** Click on a column header: same column toggles direction, new column starts ascending. */

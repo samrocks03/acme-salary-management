@@ -1,5 +1,5 @@
-import { describe, expect, it } from "vitest";
-import { formatDate, formatMoney, formatNumber, formatPercent, humanize, toIsoDate } from "./format";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { formatDate, formatMoney, formatNumber, formatPercent, humanize, todayUtcIso } from "./format";
 
 describe("formatMoney", () => {
   it("formats in the employee's local currency without decimals", () => {
@@ -40,9 +40,31 @@ describe("formatDate", () => {
     expect(formatDate("2026-04-01T23:30:00Z")).toBe("Apr 1, 2026");
     expect(formatDate("nope")).toBe("—");
   });
+});
 
-  it("serialises local dates for date inputs", () => {
-    expect(toIsoDate(new Date(2026, 0, 5))).toBe("2026-01-05");
+describe("todayUtcIso", () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it("returns the UTC calendar date (the API's Date.current), not the local one", () => {
+    vi.stubEnv("TZ", "Asia/Kolkata"); // Node re-reads TZ on assignment
+    vi.useFakeTimers();
+    // 01:00 on Oct 31 in India (UTC+5:30), but still Oct 30 for the API.
+    vi.setSystemTime(new Date("2026-10-30T19:30:00Z"));
+    expect(todayUtcIso()).toBe("2026-10-30");
+  });
+
+  it("rolls over at UTC midnight even where it's still the previous evening", () => {
+    vi.stubEnv("TZ", "America/New_York");
+    vi.useFakeTimers();
+    // 20:00 on Oct 30 in New York (UTC-4), already Oct 31 for the API.
+    vi.setSystemTime(new Date("2026-10-31T00:00:00Z"));
+    expect(todayUtcIso()).toBe("2026-10-31");
+  });
+
+  it("accepts an explicit instant and zero-pads", () => {
+    expect(todayUtcIso(new Date("2026-01-05T23:59:59.999Z"))).toBe("2026-01-05");
   });
 });
 

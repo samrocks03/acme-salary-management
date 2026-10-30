@@ -2,13 +2,12 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { QueryError } from "@/components/molecules/query-error";
 import { EmployeeForm } from "@/components/organisms/employee-form";
 import { lookupOptions } from "@/features/lookups/options";
 import { lookupsQuery } from "@/features/lookups/queries";
 import { browserApiClient } from "@/lib/api/browser";
-import { toIsoDate } from "@/lib/format";
 import { toSubmitResult } from "@/lib/forms";
 import { useCreateEmployee, useUpdateEmployee } from "../mutations";
 import { employeeDetailQuery } from "../queries";
@@ -55,9 +54,9 @@ function useFormOptions() {
   return { lookups, options };
 }
 
-export function CreateEmployeeContainer() {
+/** `today` is the UTC business date, computed by the server section so SSR and hydration agree. */
+export function CreateEmployeeContainer({ today }: { today: string }) {
   const router = useRouter();
-  const [today] = useState(() => toIsoDate(new Date()));
   const { lookups, options } = useFormOptions();
   const create = useCreateEmployee();
 
@@ -82,9 +81,8 @@ export function CreateEmployeeContainer() {
   );
 }
 
-export function EditEmployeeContainer({ id }: { id: string }) {
+export function EditEmployeeContainer({ id, today }: { id: string; today: string }) {
   const router = useRouter();
-  const [today] = useState(() => toIsoDate(new Date()));
   const { lookups, options } = useFormOptions();
   const employee = useQuery(employeeDetailQuery(browserApiClient, id));
   const update = useUpdateEmployee(id);

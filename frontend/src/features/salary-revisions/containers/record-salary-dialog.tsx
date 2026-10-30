@@ -17,7 +17,7 @@ import type { Employee } from "@/features/employees/types";
 import { lookupOptions } from "@/features/lookups/options";
 import { lookupsQuery } from "@/features/lookups/queries";
 import { browserApiClient } from "@/lib/api/browser";
-import { toIsoDate } from "@/lib/format";
+import { todayUtcIso } from "@/lib/format";
 import { toSubmitResult } from "@/lib/forms";
 import { useRecordSalaryRevision } from "../mutations";
 import type { SalaryRevisionInput } from "../types";
@@ -29,12 +29,20 @@ interface RecordSalaryDialogProps {
 
 export function RecordSalaryDialog({ employee, latestEffectiveOn }: RecordSalaryDialogProps) {
   const [open, setOpen] = useState(false);
-  const [today] = useState(() => toIsoDate(new Date()));
+  // Client-only (the form mounts when the dialog opens), so reading the clock here can't mismatch SSR.
+  // Recomputed on each open so a dialog left on screen across UTC midnight still defaults to the API's today.
+  const [today, setToday] = useState(todayUtcIso);
   const lookups = useQuery(lookupsQuery(browserApiClient));
   const record = useRecordSalaryRevision(employee.id);
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog
+      open={open}
+      onOpenChange={(next) => {
+        if (next) setToday(todayUtcIso());
+        setOpen(next);
+      }}
+    >
       <DialogTrigger asChild>
         <Button size="sm">
           <BanknoteIcon data-icon="inline-start" />

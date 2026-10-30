@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { jsonResponse, mockFetch } from "@/test/http";
-import { handleProxyRequest, isAllowedProxyPath } from "./proxy-handler";
+import { handleProxyRequest, isAllowedProxyPath, MAX_PROXY_BODY_BYTES } from "./proxy-handler";
 
 const APP = "http://localhost:3000";
 
@@ -113,5 +113,67 @@ describe("handleProxyRequest", () => {
     mockFetch(new TypeError("connect ECONNREFUSED"));
     const response = await handleProxyRequest(proxyRequest("lookups"), ["lookups"]);
     expect(response.status).toBe(502);
+  });
+
+  describe("request body size limit", () => {
+    function writeRequest(body: BodyInit, headers: Record<string, string> = {}) {
+      return new NextRequest(`${APP}/api/proxy/employees`, {
+        method: "POST",
+        headers: { host: "localhost:3000", origin: APP, cookie: "acme_session=jwt-123", "content-type": "application/json", ...headers },
+        body,
+        duplex: "half",
+      } as ConstructorParameters<typeof NextRequest>[1]);
+    }
+
+    function streamOf(totalBytes: number, chunkBytes = 64 * 1024) {
+      let sent = 0;
+      return new ReadableStream<Uint8Array>({
+        pull(controller) {
+          if (sent >= totalBytes) return controller.close();
+          const size = Math.min(chunkBytes, totalBytes - sent);
+          sent += size;
+          controller.enqueue(new Uint8Array(size).fill(0x61));
+        },
+      });
+    }
+
+    it("is 1 MB", () => {
+      expect(MAX_PROXY_BODY_BYTES).toBe(1024 * 1024);
+    });
+
+    it("rejects a declared Content-Length over the limit with 413 without reading or forwarding", async () => {
+      const fetchMock = mockFetch();
+      const response = await handleProxyRequest(
+        writeRequest("{}", { "content-length": String(MAX_PROXY_BODY_BYTES + 1) }),
+        ["employees"],
+      );
+      expect(response.status).toBe(413);
+      expect(fetchMock).not.toHaveBeenCalled();
+    });
+
+    it("rejects a body that grows past the limit even without (or with a lying) Content-Length", async () => {
+      const fetchMock = mockFetch();
+      const chunked = await handleProxyRequest(writeRequest(streamOf(MAX_PROXY_BODY_BYTES + 1)), ["employees"]);
+      const lying = await handleProxyRequest(
+        writeRequest(streamOf(MAX_PROXY_BODY_BYTES + 1), { "content-length": "10" }),
+        ["employees"],
+      );
+      expect(chunked.status).toBe(413);
+      expect(lying.status).toBe(413);
+      expect(fetchMock).not.toHaveBeenCalled();
+    });
+
+    it("forwards a body exactly at the limit, multi-byte characters intact", async () => {
+      const fetchMock = mockFetch(jsonResponse({ success: true, data: {} }, { status: 201 }));
+      const prefix = JSON.stringify({ note: "₹ café" });
+      const response = await handleProxyRequest(writeRequest(prefix), ["employees"]);
+      expect(response.status).toBe(201);
+      expect(fetchMock.mock.calls[0]?.[1]?.body).toBe(prefix);
+
+      const atLimit = mockFetch(jsonResponse({ success: true, data: {} }, { status: 201 }));
+      const ok = await handleProxyRequest(writeRequest(streamOf(MAX_PROXY_BODY_BYTES)), ["employees"]);
+      expect(ok.status).toBe(201);
+      expect((atLimit.mock.calls[0]?.[1]?.body as string).length).toBe(MAX_PROXY_BODY_BYTES);
+    });
   });
 });

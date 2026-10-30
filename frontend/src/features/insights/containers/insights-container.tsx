@@ -6,21 +6,21 @@ import type { ReactNode } from "react";
 import { QueryError } from "@/components/molecules/query-error";
 import { SelectFilter } from "@/components/molecules/select-filter";
 import { BreakdownTable } from "@/components/organisms/breakdown-table";
-import { RecentChangesCard } from "@/components/organisms/recent-changes-card";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { lookupOptions } from "@/features/lookups/options";
 import { findCountry, lookupsQuery } from "@/features/lookups/queries";
 import { browserApiClient } from "@/lib/api/browser";
+import { writeUrl } from "@/lib/history";
 import { cn } from "@/lib/utils";
 import {
   distributionQuery,
   parseCountryParam,
   payByDepartmentQuery,
   payByJobTitleQuery,
-  recentChangesQuery,
 } from "../queries";
 import { DistributionChart } from "./charts";
+import { RecentChangesContainer } from "./recent-changes-container";
 
 const INSIGHTS_PATH = "/insights";
 
@@ -62,10 +62,10 @@ export function InsightsContainer() {
   const byJobTitle = useQuery({ ...payByJobTitleQuery(browserApiClient, country), ...smooth });
   const byDepartment = useQuery({ ...payByDepartmentQuery(browserApiClient, country), ...smooth });
   const distribution = useQuery({ ...distributionQuery(browserApiClient, country), ...smooth });
-  const recent = useQuery(recentChangesQuery(browserApiClient));
 
+  // A discrete choice: push, so Back returns to the previous country (the URL is the state; see writeUrl).
   function selectCountry(code: string | undefined) {
-    window.history.replaceState(null, "", code ? `${INSIGHTS_PATH}?country=${code}` : INSIGHTS_PATH);
+    writeUrl(code ? `${INSIGHTS_PATH}?country=${code}` : INSIGHTS_PATH, "push");
   }
 
   const scope = selected
@@ -113,13 +113,7 @@ export function InsightsContainer() {
         </Panel>
       </div>
 
-      {recent.isError ? (
-        <QueryError error={recent.error} onRetry={() => recent.refetch()} />
-      ) : recent.data ? (
-        <RecentChangesCard data={recent.data} />
-      ) : (
-        <Skeleton className="h-48 w-full" />
-      )}
+      <RecentChangesContainer />
     </div>
   );
 }

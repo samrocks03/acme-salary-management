@@ -1,29 +1,33 @@
-/** Insights endpoints return plain objects (not JSON:API resources) — docs/03-api-contract.md. */
+/**
+ * Insights endpoints return plain objects (not JSON:API resources) — docs/03-api-contract.md.
+ * Money/percentage aggregates are `null` when there is nothing to aggregate (no employees in the group);
+ * counts are always numbers. Render nulls as "—" (formatMoney/formatPercent do), never as 0.
+ */
 
 export interface Overview {
   headcount: number;
   countries_count: number;
-  total_payroll_usd: number;
-  avg_salary_usd: number;
-  median_salary_usd: number;
+  total_payroll_usd: number | null;
+  avg_salary_usd: number | null;
+  median_salary_usd: number | null;
   fx_as_of: string;
 }
 
 export interface PayStats {
   headcount: number;
-  min_salary: number;
-  median_salary: number;
-  avg_salary: number;
-  max_salary: number;
+  min_salary: number | null;
+  median_salary: number | null;
+  avg_salary: number | null;
+  max_salary: number | null;
 }
 
 export interface CountryPay extends PayStats {
   country_code: string;
   country_name: string;
   currency: string;
-  avg_salary_usd: number;
-  median_salary_usd: number;
-  total_payroll_usd: number;
+  avg_salary_usd: number | null;
+  median_salary_usd: number | null;
+  total_payroll_usd: number | null;
 }
 
 export type JobTitlePay = PayStats & { job_title: string };
