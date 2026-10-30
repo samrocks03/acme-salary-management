@@ -13,7 +13,8 @@ paths:
       tags:
       - Auth
       description: Returns the JWT in the `Authorization` response header (8h expiry).
-        5 failed attempts lock the account for 15 minutes; 10 requests / 3 min / IP.
+        5 failed attempts lock the account for 15 minutes; 10 requests / 3 min per
+        IP + email.
       parameters: []
       responses:
         '200':

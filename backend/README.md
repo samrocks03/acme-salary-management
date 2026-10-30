@@ -78,7 +78,7 @@ spec/                             models, services, policies, lib, requests/api/
 - **Insights** are cached in `Rails.cache` under a key that includes a cheap data version
   (`count`, `max(updated_at)`, `max(revision id)`), so any write invalidates them — no busting code to forget.
 - **Security**: Devise + devise-jwt (denylist revocation on sign-out, 8 h expiry), lockable (5 attempts / 15 min),
-  `rate_limit` on sign-in (10 / 3 min / IP), paranoid auth messages, Pundit with `verify_authorized`, allow-listed
+  `rate_limit` on sign-in (10 / 3 min per IP + email, so the shared BFF IP is not one global bucket), paranoid auth messages, Pundit with `verify_authorized`, allow-listed
   sort columns, `sanitize_sql_like` + bound params for search, HTML stripped from text input, CSV formula-injection
   escaping, security headers, CORS limited to `FRONTEND_ORIGIN` with `Authorization` exposed, salary/amount filtered
   from logs.
