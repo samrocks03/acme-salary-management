@@ -99,3 +99,12 @@ RSpec/RepeatedExample:
 Metrics/ModuleLength:
   Exclude:
     - 'spec/support/**/*.rb'
+
+Rails/Output:
+  Exclude:
+    - 'db/seeds.rb'
+
+# Seeds bulk-insert on purpose (see Seeds::EmployeeSeeder#insert_batch).
+Rails/SkipsModelValidations:
+  Exclude:
+    - 'lib/seeds/**/*.rb'

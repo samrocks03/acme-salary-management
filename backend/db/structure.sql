@@ -75,7 +75,7 @@ CREATE TABLE public.employees (
     CONSTRAINT employees_country_code_format CHECK (((country_code)::text ~ '^[A-Z]{2}$'::text)),
     CONSTRAINT employees_currency_format CHECK (((currency)::text ~ '^[A-Z]{3}$'::text)),
     CONSTRAINT employees_email_length CHECK ((char_length((email)::text) <= 255)),
-    CONSTRAINT employees_employment_type_check CHECK (((employment_type)::text = ANY ((ARRAY['full_time'::character varying, 'part_time'::character varying, 'contractor'::character varying])::text[]))),
+    CONSTRAINT employees_employment_type_check CHECK (((employment_type)::text = ANY (ARRAY[('full_time'::character varying)::text, ('part_time'::character varying)::text, ('contractor'::character varying)::text]))),
     CONSTRAINT employees_first_name_length CHECK (((char_length((first_name)::text) >= 1) AND (char_length((first_name)::text) <= 50))),
     CONSTRAINT employees_job_title_length CHECK (((char_length((job_title)::text) >= 2) AND (char_length((job_title)::text) <= 100))),
     CONSTRAINT employees_last_name_length CHECK (((char_length((last_name)::text) >= 1) AND (char_length((last_name)::text) <= 50))),
@@ -152,7 +152,7 @@ CREATE TABLE public.salary_revisions (
     CONSTRAINT salary_revisions_amount_range CHECK (((amount > (0)::numeric) AND (amount <= (100000000)::numeric))),
     CONSTRAINT salary_revisions_note_length CHECK (((note IS NULL) OR (char_length(note) <= 500))),
     CONSTRAINT salary_revisions_previous_amount_positive CHECK (((previous_amount IS NULL) OR (previous_amount > (0)::numeric))),
-    CONSTRAINT salary_revisions_reason_check CHECK (((reason)::text = ANY ((ARRAY['hire'::character varying, 'promotion'::character varying, 'annual_review'::character varying, 'market_adjustment'::character varying, 'correction'::character varying, 'other'::character varying])::text[])))
+    CONSTRAINT salary_revisions_reason_check CHECK (((reason)::text = ANY (ARRAY[('hire'::character varying)::text, ('promotion'::character varying)::text, ('annual_review'::character varying)::text, ('market_adjustment'::character varying)::text, ('correction'::character varying)::text, ('other'::character varying)::text])))
 );
 
 
@@ -203,7 +203,7 @@ CREATE TABLE public.users (
     locked_at timestamp(6) without time zone,
     created_at timestamp(6) without time zone NOT NULL,
     updated_at timestamp(6) without time zone NOT NULL,
-    CONSTRAINT users_role_check CHECK (((role)::text = ANY ((ARRAY['hr_manager'::character varying, 'viewer'::character varying])::text[])))
+    CONSTRAINT users_role_check CHECK (((role)::text = ANY (ARRAY[('hr_manager'::character varying)::text, ('viewer'::character varying)::text])))
 );
 
 

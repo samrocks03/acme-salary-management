@@ -1,11 +1,21 @@
 # frozen_string_literal: true
 
-# This file should ensure the existence of records required to run the application in every environment (production,
-# development, test). The code here should be idempotent so that it can be executed at any point in every environment.
-# The data can then be loaded with the bin/rails db:seed command (or created alongside the database with db:setup).
-#
-# Example:
-#
-#   ["Action", "Comedy", "Drama", "Horror"].each do |genre_name|
-#     MovieGenre.find_or_create_by!(name: genre_name)
-#   end
+# bin/rails db:seed
+#   SEED_EMPLOYEES=500  fewer employees (default 10,000)
+#   SEED_RESET=1        wipe employees + history and re-seed (otherwise skipped when employees exist)
+started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+
+hr_manager, = Seeds::UserSeeder.call
+count = Seeds::EmployeeSeeder.call(
+  count: Integer(ENV.fetch('SEED_EMPLOYEES', 10_000)),
+  changed_by: hr_manager,
+  reset: ENV['SEED_RESET'] == '1'
+)
+
+elapsed = Process.clock_gettime(Process::CLOCK_MONOTONIC) - started
+if count.zero?
+  puts 'Employees already present - skipped (SEED_RESET=1 to re-seed).'
+else
+  puts format('Seeded %<employees>d employees, %<revisions>d salary revisions and %<users>d users in %<secs>.1fs',
+              employees: Employee.count, revisions: SalaryRevision.count, users: User.count, secs: elapsed)
+end
