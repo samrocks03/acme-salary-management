@@ -20,8 +20,9 @@ RSpec.describe InsightRepository do
 
   it 'loads without a database connection (eager loading, zeitwerk:check)' do
     allow(ActiveRecord::Base).to receive(:connection).and_raise(ActiveRecord::ConnectionNotEstablished)
-    file = Rails.root.join('app/services/repositories/insight_repository.rb')
+    source = Rails.root.join('app/services/repositories/insight_repository.rb').read
 
-    expect { silence_warnings { load file } }.not_to raise_error
+    # Evaluated into a throwaway namespace: re-`load`ing the real file would reset its coverage data.
+    expect { Module.new.module_eval(source) }.not_to raise_error
   end
 end
