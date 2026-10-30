@@ -3,6 +3,10 @@
 Rails.application.routes.draw do
   get 'up', to: 'rails/health#show', as: :rails_health_check
 
+  # OpenAPI document + Swagger UI (generated from spec/requests by rswag)
+  mount Rswag::Api::Engine, at: '/api-docs'
+  mount Rswag::Ui::Engine, at: '/api-docs'
+
   devise_for :users, skip: :all
   devise_scope :user do
     scope 'api/v1/auth', defaults: { format: :json } do
