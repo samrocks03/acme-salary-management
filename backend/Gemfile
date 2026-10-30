@@ -1,0 +1,50 @@
+# frozen_string_literal: true
+
+source 'https://rubygems.org'
+
+ruby file: '.ruby-version'
+
+gem 'bootsnap', require: false
+gem 'pg', '~> 1.6'
+gem 'puma', '>= 6.0'
+gem 'rails', '~> 8.1.4'
+gem 'tzinfo-data', platforms: %i[windows jruby]
+
+# Auth & authorization
+gem 'devise', '~> 5.0'
+gem 'devise-jwt', '~> 0.12'
+gem 'pundit', '~> 2.5'
+
+# API
+gem 'jsonapi-serializer', '~> 2.2'
+gem 'rack-cors', '~> 3.0'
+gem 'rswag-api', '~> 2.16'
+gem 'rswag-ui', '~> 2.16'
+
+# Ruby 4 no longer ships these as default gems (csv: export; ostruct: required by rswag-ui)
+gem 'csv', '~> 3.3'
+gem 'ostruct', '~> 0.6'
+
+# Seeds run in every environment (docker / review apps), so faker lives in the default group
+gem 'faker', '~> 3.5'
+
+group :development, :test do
+  gem 'brakeman', require: false
+  gem 'bullet'
+  gem 'bundler-audit', require: false
+  gem 'debug', platforms: %i[mri windows], require: 'debug/prelude'
+  gem 'factory_bot_rails'
+  gem 'rspec-rails', '~> 8.0'
+  gem 'rswag-specs', '~> 2.16'
+  gem 'rubocop', require: false
+  gem 'rubocop-factory_bot', require: false
+  gem 'rubocop-performance', require: false
+  gem 'rubocop-rails', require: false
+  gem 'rubocop-rspec', require: false
+  gem 'rubocop-rspec_rails', require: false
+end
+
+group :test do
+  gem 'shoulda-matchers', '~> 6.5'
+  gem 'simplecov', require: false
+end

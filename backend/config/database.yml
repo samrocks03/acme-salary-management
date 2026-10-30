@@ -1,0 +1,23 @@
+# PostgreSQL 17 (pg_trgm is enabled by a migration).
+# Connection settings come from the environment so the same file works locally and in Docker.
+default: &default
+  adapter: postgresql
+  encoding: unicode
+  host: <%= ENV.fetch("DATABASE_HOST", "localhost") %>
+  port: <%= ENV.fetch("DATABASE_PORT", 5432) %>
+  username: <%= ENV.fetch("DATABASE_USERNAME", "postgres") %>
+  password: <%= ENV.fetch("DATABASE_PASSWORD", "postgres") %>
+  max_connections: <%= ENV.fetch("RAILS_MAX_THREADS", 5) %>
+
+development:
+  <<: *default
+  database: acme_salary_development
+
+test:
+  <<: *default
+  database: acme_salary_test
+
+production:
+  <<: *default
+  database: acme_salary_production
+  url: <%= ENV["DATABASE_URL"] %>

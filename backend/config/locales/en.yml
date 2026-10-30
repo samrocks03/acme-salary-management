@@ -1,0 +1,4 @@
+en:
+  exception:
+    errors:
+      detail: "Something went wrong. Please try again."

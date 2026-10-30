@@ -1,0 +1,71 @@
+plugins:
+  - rubocop-rails
+  - rubocop-rspec
+  - rubocop-rspec_rails
+  - rubocop-factory_bot
+  - rubocop-performance
+
+AllCops:
+  TargetRubyVersion: 3.4
+  NewCops: enable
+  SuggestExtensions: false
+  Exclude:
+    - 'bin/**/*'
+    - 'db/schema.rb'
+    - 'vendor/**/*'
+    - 'tmp/**/*'
+    - 'log/**/*'
+    - 'node_modules/**/*'
+
+Style/Documentation:
+  Enabled: false
+
+Style/HashSyntax:
+  EnforcedStyle: ruby19_no_mixed_keys
+
+Layout/LineLength:
+  Max: 120
+
+Metrics/BlockLength:
+  Exclude:
+    - 'config/**/*.rb'
+    - 'db/migrate/**/*.rb'
+    - 'spec/**/*.rb'
+
+Metrics/MethodLength:
+  Max: 15
+  Exclude:
+    - 'db/**/*.rb'
+
+Metrics/AbcSize:
+  Exclude:
+    - 'db/**/*.rb'
+
+Metrics/ClassLength:
+  Enabled: false
+
+RSpec/MultipleExpectations:
+  Max: 5
+
+RSpec/ExampleLength:
+  Max: 20
+
+RSpec/MultipleMemoizedHelpers:
+  Max: 10
+
+RSpec/NestedGroups:
+  Max: 4
+
+# rswag request specs: `let`s are referenced implicitly by run_test! and describe blocks use path strings.
+RSpec/LetSetup:
+  Exclude:
+    - 'spec/requests/**/*.rb'
+RSpec/VariableName:
+  Exclude:
+    - 'spec/requests/**/*.rb'
+RSpec/EmptyExampleGroup:
+  Exclude:
+    - 'spec/requests/**/*.rb'
+RSpec/DescribeClass:
+  Exclude:
+    - 'spec/requests/**/*.rb'
