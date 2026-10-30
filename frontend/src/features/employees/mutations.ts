@@ -13,7 +13,8 @@ import type { EmployeeCreateInput, EmployeeUpdateInput } from "./types";
 export function useCreateEmployee() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (input: EmployeeCreateInput) => createEmployee(browserApiClient, input),
+    mutationFn: (input: EmployeeCreateInput) =>
+      createEmployee(browserApiClient, input),
     onSuccess: (employee) => {
       queryClient.setQueryData(employeeKeys.detail(employee.id), employee);
       void queryClient.invalidateQueries({ queryKey: employeeKeys.lists() });
@@ -27,9 +28,14 @@ export function useCreateEmployee() {
 export function useUpdateEmployee(id: string) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (input: EmployeeUpdateInput) => updateEmployee(browserApiClient, id, input),
+    mutationFn: (input: EmployeeUpdateInput) =>
+      updateEmployee(browserApiClient, id, input),
     onSuccess: (employee) => {
       queryClient.setQueryData(employeeKeys.detail(id), employee);
+      // A corrected hire date moves the system "hire" revision, so the history may have changed too.
+      void queryClient.invalidateQueries({
+        queryKey: salaryRevisionKeys.list(id),
+      });
       void queryClient.invalidateQueries({ queryKey: employeeKeys.lists() });
       void queryClient.invalidateQueries({ queryKey: insightKeys.all });
       void queryClient.invalidateQueries({ queryKey: lookupKeys.all }); // job titles/departments may change
