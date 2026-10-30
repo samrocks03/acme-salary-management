@@ -33,6 +33,24 @@ RSpec.describe EmployeeService::Index do
     expect(call(per_page: '0').meta).to include(per_page: 1, total_pages: 3)
   end
 
+  it 'clamps a page past the end to the last page and reports it in meta' do
+    result = call(per_page: '2', page: '50')
+
+    expect(result.meta).to eq(page: 2, per_page: 2, total_count: 3, total_pages: 2)
+    expect(result.data.map { |row| row[:attributes][:first_name] }).to eq(%w[Cara])
+  end
+
+  it 'clamps an absurdly large page without sending it to the database' do
+    result = call(per_page: '2', page: '99999999999999999999')
+
+    expect(result).to be_success
+    expect(result.meta).to include(page: 2, total_pages: 2)
+  end
+
+  it 'reports page 1 when nothing matches' do
+    expect(call(q: 'nobody', page: '4').meta).to eq(page: 1, per_page: 25, total_count: 0, total_pages: 0)
+  end
+
   it 'ignores non-scalar params instead of failing' do
     result = call(q: ['x'], country: { a: 1 }, page: ['2'])
 

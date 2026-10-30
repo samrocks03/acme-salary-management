@@ -23,7 +23,8 @@ RSpec.describe 'api/v1/employees' do
       parameter name: :sort, in: :query, required: false,
                 schema: { type: :string, enum: EmployeeRepository::SORTABLE_COLUMNS, default: 'full_name' }
       parameter name: :direction, in: :query, required: false, schema: { type: :string, enum: %w[asc desc] }
-      parameter name: :page, in: :query, required: false, schema: { type: :integer, minimum: 1, default: 1 }
+      parameter name: :page, in: :query, required: false, schema: { type: :integer, minimum: 1, default: 1 },
+                description: 'Clamped to 1..total_pages; `meta.page` is the page actually returned'
       parameter name: :per_page, in: :query, required: false,
                 schema: { type: :integer, minimum: 1, maximum: 100, default: 25 }
 
@@ -71,6 +72,17 @@ RSpec.describe 'api/v1/employees' do
           run_test! do |response|
             expect(response.parsed_body['data'].pluck('attributes').pluck('full_name')).to eq(['Ravi Shah'])
             expect(response.parsed_body['meta']).to include('total_count' => 3, 'total_pages' => 2)
+          end
+        end
+
+        context 'when the page is past the end (or too large for an integer column)' do
+          let(:per_page) { 2 }
+          let(:page) { '99999999999999999999' }
+
+          run_test! do |response|
+            expect(response.parsed_body['data'].pluck('attributes').pluck('full_name')).to eq(['Ravi Shah'])
+            expect(response.parsed_body['meta']).to eq('page' => 2, 'per_page' => 2, 'total_count' => 3,
+                                                       'total_pages' => 2)
           end
         end
 

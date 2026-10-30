@@ -170,6 +170,7 @@ paths:
           type: integer
           minimum: 1
           default: 1
+        description: Clamped to 1..total_pages; `meta.page` is the page actually returned
       - name: per_page
         in: query
         required: false
