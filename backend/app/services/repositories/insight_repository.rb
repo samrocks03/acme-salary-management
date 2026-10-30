@@ -2,15 +2,20 @@
 
 # Read-only aggregates over `employees` / `salary_revisions`. Thanks to the denormalised current salary
 # (domain rule 2) every figure is a single-table GROUP BY; medians use percentile_cont.
-# The only SQL fragments interpolated below are constants or Reference::Fx.to_usd_sql (config-built);
+# The only SQL fragments interpolated below are constants or `usd_sql` (Reference::Fx.to_usd_sql, config-built);
 # every user-supplied value is a bound parameter.
 class InsightRepository
-  USD = Reference::Fx.to_usd_sql('employees.salary')
   BUCKETS = 10
   CHANGE_PERCENT_AVG =
     'AVG((salary_revisions.amount - salary_revisions.previous_amount) / salary_revisions.previous_amount * 100)'
 
   class << self
+    # Memoised on first use rather than a constant: building it quotes values through a DB connection,
+    # which must not be needed at class-load time (eager loading, `zeitwerk:check`, asset builds).
+    def usd_sql
+      @usd_sql ||= Reference::Fx.to_usd_sql('employees.salary').freeze
+    end
+
     # Cheap fingerprint of the data; part of every insights cache key, so any write invalidates the cache.
     def data_version
       count, updated_at = Employee.pick(Arel.sql('COUNT(*)'), Arel.sql('MAX(employees.updated_at)'))
@@ -20,7 +25,7 @@ class InsightRepository
     def overview
       Employee.pick(
         Arel.sql('COUNT(*)'), Arel.sql('COUNT(DISTINCT employees.country_code)'),
-        Arel.sql(round("SUM(#{USD})")), Arel.sql(round("AVG(#{USD})")), Arel.sql(median(USD))
+        Arel.sql(round("SUM(#{usd_sql})")), Arel.sql(round("AVG(#{usd_sql})")), Arel.sql(median(usd_sql))
       )
     end
 
@@ -28,7 +33,7 @@ class InsightRepository
       Employee.group(:country_code, :currency)
               .order(Arel.sql('COUNT(*) DESC'), :country_code)
               .pluck(:country_code, :currency, Arel.sql('COUNT(*)'), *stats('employees.salary'),
-                     Arel.sql(round("AVG(#{USD})")), Arel.sql(median(USD)), Arel.sql(round("SUM(#{USD})")))
+                     Arel.sql(round("AVG(#{usd_sql})")), Arel.sql(median(usd_sql)), Arel.sql(round("SUM(#{usd_sql})")))
     end
 
     # Grouped stats in local currency when `country_code` is given, otherwise USD-normalised.
@@ -73,7 +78,7 @@ class InsightRepository
     end
 
     def amount(country_code)
-      country_code ? 'employees.salary' : USD
+      country_code ? 'employees.salary' : usd_sql
     end
 
     def stats(value)
