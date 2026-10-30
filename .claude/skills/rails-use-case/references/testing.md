@@ -60,7 +60,7 @@ require 'swagger_helper'
 
 RSpec.describe 'Employees API' do
   let(:hr) { create(:user) }
-  let(:Authorization) { auth_header_for(hr) } # spec/support/auth_helpers.rb
+  let(:Authorization) { bearer_for(hr) } # spec/support/auth_helpers.rb — real signed JWT
 
   path '/api/v1/employees' do
     post 'Create an employee' do
@@ -76,7 +76,7 @@ RSpec.describe 'Employees API' do
       end
 
       response 403, 'viewer cannot create' do
-        let(:Authorization) { auth_header_for(create(:user, :viewer)) }
+        let(:Authorization) { bearer_for(create(:user, :viewer)) }
         run_test!
       end
 
@@ -90,8 +90,10 @@ end
 ```
 
 ## 5. Factories — `spec/factories/*.rb`
-Defaults are valid and minimal; variations are traits (`:viewer`, `:with_history`, `:in_country`), so a spec
-reads as the scenario it sets up.
+Defaults are valid and minimal (`create(:user)` is an hr_manager); variations are traits — `:user, :viewer`,
+`:user, :locked`, `:employee, :with_history`, `:employee, :us` — so a spec reads as the scenario it sets up.
+Shared datasets for insights live in `spec/support/insight_dataset.rb`; reusable swagger schemas in
+`spec/support/swagger_schemas.rb` (`SwaggerSchemas.envelope`, `.resource`, `.error`).
 
 ## 6. Swagger
 `RAILS_ENV=test bundle exec rake rswag:specs:swaggerize` regenerates `swagger/v1/swagger.yaml` (committed,

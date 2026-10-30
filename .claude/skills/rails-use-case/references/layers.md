@@ -1,8 +1,20 @@
 # Layer templates
 
-Contents: 1. Route · 2. Controller · 3. Service · 4. ServiceResult · 5. Repository · 6. Serializer · 7. Policy · 8. Locale
+Contents: 0. Exemplars · 1. Route · 2. Controller · 3. Service · 4. ServiceResult & Base helpers · 5. Repository · 6. Serializer · 7. Policy · 8. Locale
 
-Paths are relative to `backend/`. Adapt names; keep the shape.
+Paths are relative to `backend/`. When in doubt, copy the shape of the exemplar file rather than these snippets.
+
+## 0. Exemplars — read the closest one first
+| Need | Exemplar |
+|---|---|
+| CRUD controller with strong params | `app/controllers/api/v1/employees_controller.rb` |
+| Nested resource controller | `app/controllers/api/v1/salary_revisions_controller.rb` |
+| Write service with transaction + derived state | `app/services/salary_revision_service/create.rb`, `app/services/employee_service/create.rb` |
+| List service with filters + pagination meta | `app/services/employee_service/index.rb` (+ `filter_params.rb`) |
+| Cached aggregate | `app/services/insight_service/*.rb` (+ `support.rb`, `grouped_stats.rb`) |
+| Query building | `app/services/repositories/employee_repository.rb`, `insight_repository.rb` |
+| Envelope rendering / error mapping | `app/controllers/concerns/renders_service_result.rb`, `error_handling.rb` |
+| Reference data (countries, FX) | `app/models/reference/*.rb`, `config/countries.yml`, `config/currencies.yml` |
 
 ## 1. Route — `config/routes.rb`
 ```ruby
@@ -16,136 +28,101 @@ namespace :api do
 end
 ```
 
-## 2. Controller — `app/controllers/api/v1/employees_controller.rb`
-Thin: authorize, delegate, render. Strong params live here because they describe the HTTP surface.
+## 2. Controller
+Thin: authorize, delegate, render. Strong params use Rails 8 `params.expect`, one method per writing action.
 ```ruby
 module Api
   module V1
     class EmployeesController < ApplicationController
-      def index
-        authorize Employee
-        render_result EmployeeService::Index.new(current_user, index_params).call
-      end
+      EMPLOYEE_ATTRIBUTES = %i[first_name last_name email job_title department employment_type hired_on].freeze
 
       def create
         authorize Employee
-        render_result EmployeeService::Create.new(current_user, create_params).call, success_status: :created
+        render_result EmployeeService::Create.new(create_params, current_user).call
       end
 
       private
 
-      def index_params
-        params.permit(:q, :country, :department, :job_title, :employment_type, :sort, :direction, :page, :per_page)
-      end
-
       def create_params
-        params.require(:employee).permit(:first_name, :last_name, :email, :job_title, :department,
-                                         :country_code, :employment_type, :hired_on, :salary)
+        params.expect(employee: [*EMPLOYEE_ATTRIBUTES, :country_code, :salary])
       end
     end
   end
 end
 ```
-`render_result` (concern `RendersServiceResult`) maps `ServiceResult` → status + envelope; errors use the
-result's own status (`:not_found`, `:unprocessable_content`, …).
+`render_result` maps the `ServiceResult` to its `status` and JSON envelope. Services are constructed as
+`(<id or params>, current_user)` — keep that argument order.
 
-## 3. Service — `app/services/employee_service/create.rb`
-One public `call`, returns a `ServiceResult`. Guard clauses return early failures; the happy path reads top-down.
+## 3. Service
+One public `call`, returns a `ServiceResult`. Guard clauses return early; the happy path reads top-down.
 ```ruby
 module EmployeeService
+  # Creates the employee and its first salary revision (domain rule 4) in one transaction.
   class Create < Base
     SUCCESS_KEY = 'employee.create.success.message'
 
-    def initialize(current_user, params)
+    def initialize(params, current_user)
       super()
+      @params = params.to_h.symbolize_keys
       @current_user = current_user
-      @params = params
     end
 
     def call
       employee = Employee.new(@params)
       ActiveRecord::Base.transaction do
         employee.save!
-        SalaryRevisionRepository.create_hire!(employee, changed_by: @current_user)
+        record_hire_revision!(employee)
       end
-      success(serialize(employee), message_key: SUCCESS_KEY, status: :created)
+
+      success(serialize(V1::EmployeeSerializer, employee.reload), message_key: SUCCESS_KEY, status: :created)
     rescue ActiveRecord::RecordInvalid => e
-      validation_failure(e.record)
+      validation_failure(e.record.errors)
     end
-
-    private
-
-    def serialize(employee) = V1::EmployeeSerializer.new(employee).serializable_hash[:data]
   end
 end
 ```
+Anything that derives state from a row (current salary) locks it first: `EmployeeRepository.find_for_update(id)`.
 
-## 4. ServiceResult — `app/services/service_result.rb`
-Immutable value object instead of the reference repo's `OpenStruct` (explicit fields, no method_missing).
-```ruby
-ServiceResult = Data.define(:success, :data, :message, :errors, :meta, :status) do
-  def success? = success
-  def to_h = { success:, message:, data:, meta:, errors: }.compact
-end
-```
+## 4. ServiceResult & Base helpers
+`ServiceResult = Data.define(:success, :data, :message, :errors, :meta, :status)` with `.ok(...)` / `.error(...)`
+— an immutable replacement for the reference repo's `OpenStruct`. Inside services use the `Base` helpers:
+| Helper | Use for |
+|---|---|
+| `success(data, message_key:, meta: nil, status: :ok)` | Happy path; message translated from en.yml |
+| `failure(key, status: :unprocessable_content)` | Business-rule failure → `errors.base` (`key` + `.detail` translated) |
+| `validation_failure(record.errors)` | ActiveModel errors → `{ field: [messages] }` |
+| `serialize(SerializerClass, resource)` | JSON:API `data` hash |
 
-## 5. Repository — `app/services/repositories/employee_repository.rb`
-Class methods only; no request state. Every user-controlled ordering goes through an allow-list.
+## 5. Repository
+Class methods inside `class << self`, no request state. User input never becomes SQL text: allow-listed
+sort columns/directions passed to `order` as a hash, `sanitize_sql_like` + bind params for search.
 ```ruby
 class EmployeeRepository
-  SORTABLE = %w[full_name salary hired_on job_title country_code department created_at].freeze
+  SORTABLE_COLUMNS = %w[full_name salary hired_on job_title country_code department created_at].freeze
 
-  def self.search(scope, query)
-    return scope if query.blank?
-
-    pattern = "%#{ActiveRecord::Base.sanitize_sql_like(query.strip)}%"
-    scope.where('employees.full_name ILIKE :p OR employees.email ILIKE :p OR employees.employee_code ILIKE :p', p: pattern)
-  end
-
-  def self.sorted(scope, column, direction)
-    column = SORTABLE.include?(column) ? column : 'full_name'
-    direction = direction == 'desc' ? :desc : :asc
-    scope.order(column => direction, id: :asc) # tie-breaker keeps pagination stable
+  class << self
+    def sorted(scope, sort, direction)
+      column = SORTABLE_COLUMNS.include?(sort) ? sort : DEFAULT_SORT
+      dir = DIRECTIONS.include?(direction) ? direction : DEFAULT_DIRECTION
+      scope.order(column => dir).order(id: dir) # id breaks ties so pages are stable
+    end
   end
 end
 ```
 
-## 6. Serializer — `app/serializers/v1/employee_serializer.rb`
-```ruby
-module V1
-  class EmployeeSerializer
-    include JSONAPI::Serializer
-    attributes :employee_code, :first_name, :last_name, :full_name, :email, :job_title, :department,
-               :country_code, :currency, :employment_type, :hired_on, :created_at, :updated_at
-    attribute(:salary) { |e| e.salary.to_f }
-    attribute(:salary_usd) { |e| Reference::Fx.to_usd(e.salary, e.currency).to_f }
-    attribute(:country_name) { |e| Reference::Country.find(e.country_code)&.name }
-  end
-end
-```
+## 6. Serializer — `app/serializers/v1/*_serializer.rb`
+`include JSONAPI::Serializer`; money as `to_f`; computed fields (`salary_usd`, `country_name`,
+`change_percent`, `changed_by_name`) as attribute blocks using `Reference::Fx` / `Reference::Country`.
 
-## 7. Policy — `app/policies/employee_policy.rb`
+## 7. Policy
 ```ruby
 class EmployeePolicy < ApplicationPolicy
   def index? = user.present?
-  def show? = user.present?
   def create? = user.hr_manager?
-  def update? = user.hr_manager?
-  def destroy? = user.hr_manager?
   def export? = user.hr_manager?
 end
 ```
-Headless policies (insights, lookups): `authorize :insight, :show?` → `InsightPolicy#show?`.
+Headless policies for non-model endpoints: `authorize :insight, :show?` → `InsightPolicy#show?`.
 
 ## 8. Locale — `config/locales/en.yml`
-```yaml
-en:
-  employee:
-    create:
-      success:
-        message: "Employee created successfully."
-    show:
-      errors:
-        not_found:
-          detail: "Employee not found."
-```
+`<domain>.<action>.success.message` and `<domain>.<action>.errors.<name>.detail`.
