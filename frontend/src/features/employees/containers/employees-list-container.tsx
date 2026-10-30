@@ -1,9 +1,9 @@
 "use client";
 
-import { keepPreviousData, useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useQuery, useQueryClient } from "@tanstack/react-query";
 import { DownloadIcon } from "lucide-react";
 import { useSearchParams } from "next/navigation";
-import { useCallback, useMemo } from "react";
+import { useCallback, useEffect, useMemo } from "react";
 import { QueryError } from "@/components/molecules/query-error";
 import { PaginationControls } from "@/components/molecules/pagination-controls";
 import { EmployeeFilters } from "@/components/organisms/employee-filters";
@@ -17,6 +17,7 @@ import {
   applyListChange,
   hasActiveFilters,
   parseEmployeeListParams,
+  reconcilePage,
   serializeEmployeeListParams,
   toggleSort,
 } from "../params";
@@ -39,6 +40,7 @@ export function EmployeesListContainer({ canEdit, canExport }: EmployeesListCont
   const searchParams = useSearchParams();
   const params = useMemo(() => parseEmployeeListParams(new URLSearchParams(searchParams)), [searchParams]);
 
+  const queryClient = useQueryClient();
   const list = useQuery({ ...employeeListQuery(browserApiClient, params), placeholderData: keepPreviousData });
   const lookups = useQuery(lookupsQuery(browserApiClient));
   const options = useMemo(() => lookupOptions(lookups.data), [lookups.data]);
@@ -50,6 +52,19 @@ export function EmployeesListContainer({ canEdit, canExport }: EmployeesListCont
     },
     [params],
   );
+
+  // The API clamps an out-of-range page (stale link, list shrank after a delete) and reports the page it
+  // served. Make the URL agree — replace, not push: it's a correction, not a step the user took — and seed
+  // the corrected key with the data we already have so it isn't fetched again.
+  useEffect(() => {
+    if (!list.data || list.isPlaceholderData) return;
+    const corrected = reconcilePage(params, list.data.meta);
+    if (!corrected) return;
+    if (list.data.meta.page === corrected.page) {
+      queryClient.setQueryData(employeeListQuery(browserApiClient, corrected).queryKey, list.data);
+    }
+    window.history.replaceState(null, "", `${LIST_PATH}${serializeEmployeeListParams(corrected)}`);
+  }, [list.data, list.isPlaceholderData, params, queryClient]);
 
   return (
     <div className="flex flex-col gap-4">

@@ -4,6 +4,7 @@ import {
   exportQuery,
   hasActiveFilters,
   parseEmployeeListParams,
+  reconcilePage,
   serializeEmployeeListParams,
   toggleSort,
   toURLSearchParams,
@@ -79,5 +80,26 @@ describe("list changes", () => {
 
   it("exports the filtered view without pagination", () => {
     expect(exportQuery(parse("country=IN&sort=salary&page=7&per_page=50"))).toBe("?country=IN&sort=salary");
+  });
+});
+
+describe("reconcilePage", () => {
+  const meta = (page: number, total_pages: number) => ({ page, per_page: 25, total_count: total_pages * 25, total_pages });
+
+  it("returns null when the server served the requested page", () => {
+    expect(reconcilePage(parse("page=2"), meta(2, 3))).toBeNull();
+  });
+
+  it("follows the page the server clamped to, keeping filters", () => {
+    expect(reconcilePage(parse("country=IN&page=50"), meta(3, 3))).toEqual({ ...parse("country=IN&page=3") });
+  });
+
+  it("clamps itself when the server echoes an out-of-range page", () => {
+    expect(reconcilePage(parse("page=50"), meta(50, 3))).toMatchObject({ page: 3 });
+  });
+
+  it("goes back to page 1 when the result set is empty", () => {
+    expect(reconcilePage(parse("q=zzz&page=4"), meta(4, 0))).toMatchObject({ q: "zzz", page: 1 });
+    expect(reconcilePage(parse("q=zzz"), meta(1, 0))).toBeNull();
   });
 });
