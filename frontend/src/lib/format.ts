@@ -13,6 +13,7 @@ function currencyFormatter(currency: string, compact: boolean): Intl.NumberForma
     formatter = new Intl.NumberFormat(LOCALE, {
       style: "currency",
       currency,
+      minimumFractionDigits: 0,
       maximumFractionDigits: compact ? 1 : 0,
       ...(compact ? { notation: "compact" as const } : {}),
     });

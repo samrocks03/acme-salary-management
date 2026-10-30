@@ -33,6 +33,8 @@ export default defineConfig({
           include: ["src/**/*.test.tsx"],
           setupFiles: ["./src/test/setup.ts"],
           css: false,
+          // Cold jsdom + Radix imports can exceed 5s on a saturated CI runner; logic tests keep the default.
+          testTimeout: 15_000,
         },
       },
     ],

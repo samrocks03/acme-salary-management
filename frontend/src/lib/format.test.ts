@@ -10,6 +10,7 @@ describe("formatMoney", () => {
 
   it("supports compact notation for KPI cards", () => {
     expect(formatMoney(1_250_000_000, "USD", { compact: true })).toBe("$1.3B");
+    expect(formatMoney(20_000, "USD", { compact: true })).toBe("$20K");
   });
 
   it("renders an em dash for missing values", () => {
