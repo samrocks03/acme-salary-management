@@ -19,8 +19,14 @@ module AcmeSalary
 
     config.autoload_lib(ignore: %w[assets tasks])
 
+    # Repositories are top-level constants (EmployeeRepository), as in the reference codebase.
+    config.autoload_paths << Rails.root.join('app/services/repositories')
+    config.eager_load_paths << Rails.root.join('app/services/repositories')
+
     # JSON API only: no sessions, cookies or views. Auth is a stateless Bearer JWT.
     config.api_only = true
+    # Request bodies must use the documented root key ({ "employee": { ... } }); a missing root is a 400.
+    config.action_controller.wrap_parameters_by_default = false
 
     config.time_zone = 'UTC'
     config.active_record.default_timezone = :utc

@@ -1,0 +1,48 @@
+# frozen_string_literal: true
+
+require 'rails_helper'
+
+RSpec.describe EmployeeService::Index do
+  let(:user) { create(:user, :viewer) }
+
+  def call(params = {})
+    described_class.new(ActionController::Parameters.new(params), user).call
+  end
+
+  before do
+    create(:employee, first_name: 'Asha', department: 'Engineering', employment_type: 'full_time')
+    create(:employee, :us, first_name: 'Bob', department: 'Sales', employment_type: 'contractor')
+    create(:employee, :us, first_name: 'Cara', department: 'Sales', job_title: 'Account Manager')
+  end
+
+  it 'defaults to page 1, 25 per page, sorted by full name' do
+    result = call
+
+    expect(result.meta).to eq(page: 1, per_page: 25, total_count: 3, total_pages: 1)
+    expect(result.data.map { |row| row[:attributes][:first_name] }).to eq(%w[Asha Bob Cara])
+  end
+
+  it 'combines exact filters' do
+    result = call(country: 'us', department: 'Sales', employment_type: 'contractor')
+
+    expect(result.data.map { |row| row[:attributes][:first_name] }).to eq(%w[Bob])
+  end
+
+  it 'clamps per_page to 1..100 and page to >= 1' do
+    expect(call(per_page: '1000', page: '-3').meta).to include(page: 1, per_page: 100)
+    expect(call(per_page: '0').meta).to include(per_page: 1, total_pages: 3)
+  end
+
+  it 'ignores non-scalar params instead of failing' do
+    result = call(q: ['x'], country: { a: 1 }, page: ['2'])
+
+    expect(result).to be_success
+    expect(result.meta[:total_count]).to eq(3)
+  end
+
+  it 'falls back to the default sort for unknown columns and directions' do
+    result = call(sort: 'encrypted_password', direction: 'sideways')
+
+    expect(result.data.map { |row| row[:attributes][:first_name] }).to eq(%w[Asha Bob Cara])
+  end
+end

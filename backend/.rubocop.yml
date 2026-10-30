@@ -52,6 +52,8 @@ RSpec/ExampleLength:
 
 RSpec/MultipleMemoizedHelpers:
   Max: 10
+  Exclude:
+    - 'spec/requests/**/*.rb'
 
 RSpec/NestedGroups:
   Max: 4
@@ -77,3 +79,8 @@ RSpec/EmptyExampleGroup:
 RSpec/DescribeClass:
   Exclude:
     - 'spec/requests/**/*.rb'
+
+# Pundit's `permissions :a?, :b? do` blocks look like repeated examples to this cop.
+RSpec/RepeatedExample:
+  Exclude:
+    - 'spec/policies/**/*.rb'

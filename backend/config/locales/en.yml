@@ -19,3 +19,22 @@ en:
     me:
       success:
         message: "Current user retrieved successfully."
+  employee:
+    errors:
+      not_found:
+        detail: "Employee not found."
+    index:
+      success:
+        message: "Employees retrieved successfully."
+    show:
+      success:
+        message: "Employee retrieved successfully."
+    create:
+      success:
+        message: "Employee created successfully."
+    update:
+      success:
+        message: "Employee updated successfully."
+    destroy:
+      success:
+        message: "Employee %{name} deleted successfully."
