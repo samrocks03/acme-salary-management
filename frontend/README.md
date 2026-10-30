@@ -94,7 +94,8 @@ invalidate them), insights 5 min (writes invalidate them). 4xx responses are not
 - No `dangerouslySetInnerHTML` anywhere (`react/no-danger` is an error); the shadcn chart was patched to expose
   colours as CSS variables instead of injecting a `<style>` tag.
 - Headers on every response: CSP (no nonces, to keep PPR static shells; see `src/lib/security-headers.ts`),
-  `X-Frame-Options: DENY`, `nosniff`, `Referrer-Policy`, `Permissions-Policy`; `poweredByHeader: false`.
+  `X-Frame-Options: DENY`, `nosniff`, `Referrer-Policy`, `Permissions-Policy`, and HSTS (production builds only);
+  `poweredByHeader: false`.
 - Roles: `can(role, action)` hides write affordances from viewers; write routes call `requirePermission()` which
   renders `forbidden.tsx`. Because the check runs inside a streamed Suspense boundary the HTTP status stays 200
   while the 403 UI renders. The API (Pundit) remains the real enforcement point.

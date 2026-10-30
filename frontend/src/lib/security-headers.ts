@@ -20,8 +20,16 @@ export function buildContentSecurityPolicy(isDev: boolean): string {
   ].join("; ");
 }
 
+/**
+ * HSTS: two years, subdomains included (no `preload` — that is a one-way commitment for the whole domain).
+ * Production only: in dev it would pin `localhost` to HTTPS in the browser. Browsers ignore it over plain
+ * HTTP, so a production build served on http://localhost (Docker) is unaffected.
+ */
+export const HSTS_VALUE = "max-age=63072000; includeSubDomains";
+
 export function buildSecurityHeaders(isDev: boolean): { key: string; value: string }[] {
   return [
+    ...(isDev ? [] : [{ key: "Strict-Transport-Security", value: HSTS_VALUE }]),
     { key: "Content-Security-Policy", value: buildContentSecurityPolicy(isDev) },
     { key: "X-Frame-Options", value: "DENY" },
     { key: "X-Content-Type-Options", value: "nosniff" },

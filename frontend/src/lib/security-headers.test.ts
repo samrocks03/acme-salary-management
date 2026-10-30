@@ -21,4 +21,11 @@ describe("security headers", () => {
     expect(headers["X-Content-Type-Options"]).toBe("nosniff");
     expect(headers["Referrer-Policy"]).toBe("strict-origin-when-cross-origin");
   });
+
+  it("sends HSTS in production only", () => {
+    const prod = Object.fromEntries(buildSecurityHeaders(false).map((h) => [h.key, h.value]));
+    expect(prod["Strict-Transport-Security"]).toBe("max-age=63072000; includeSubDomains");
+    const dev = buildSecurityHeaders(true).map((h) => h.key);
+    expect(dev).not.toContain("Strict-Transport-Security");
+  });
 });
