@@ -1,0 +1,14 @@
+# Static, dated FX table used to normalise org-wide figures to USD (domain rule 7).
+# rate = USD per 1 unit of the currency. Bump `as_of` whenever rates change; reports display it.
+base: USD
+as_of: '2026-10-01'
+rates:
+  USD: 1.0
+  GBP: 1.27
+  EUR: 1.08
+  INR: 0.0115
+  CAD: 0.73
+  AUD: 0.66
+  SGD: 0.75
+  JPY: 0.0067
+  BRL: 0.18

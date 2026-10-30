@@ -1,0 +1,11 @@
+# ISO-3166 alpha-2 countries ACME employs people in, and the currency each is paid in (domain rule 1).
+- { code: US, name: United States, currency: USD }
+- { code: GB, name: United Kingdom, currency: GBP }
+- { code: DE, name: Germany, currency: EUR }
+- { code: NL, name: Netherlands, currency: EUR }
+- { code: IN, name: India, currency: INR }
+- { code: CA, name: Canada, currency: CAD }
+- { code: AU, name: Australia, currency: AUD }
+- { code: SG, name: Singapore, currency: SGD }
+- { code: JP, name: Japan, currency: JPY }
+- { code: BR, name: Brazil, currency: BRL }

@@ -25,9 +25,8 @@ module AcmeSalary
     config.time_zone = 'UTC'
     config.active_record.default_timezone = :utc
 
-    # Generated columns, check constraints and the employee_code sequence are Postgres features
-    # that schema.rb can express in Rails 8.1, so keep the Ruby schema format.
-    config.active_record.schema_format = :ruby
+    # The employee_code sequence can't be expressed in schema.rb, so dump the schema as SQL.
+    config.active_record.schema_format = :sql
 
     # Insights are cached in-process; the cache key embeds a data version so writes invalidate it.
     config.cache_store = :memory_store, { size: 32 * 1024 * 1024 }

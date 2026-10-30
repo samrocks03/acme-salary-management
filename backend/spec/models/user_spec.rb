@@ -7,6 +7,7 @@ RSpec.describe User do
 
   it { is_expected.to validate_presence_of(:name) }
   it { is_expected.to validate_length_of(:name).is_at_most(100) }
+
   it do
     expect(user).to define_enum_for(:role)
       .with_values(hr_manager: 'hr_manager', viewer: 'viewer').backed_by_column_of_type(:string)

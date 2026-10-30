@@ -1,0 +1,8 @@
+en:
+  activerecord:
+    errors:
+      models:
+        employee:
+          attributes:
+            country_code:
+              immutable: "can't be changed"
