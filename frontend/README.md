@@ -1,7 +1,8 @@
 # ACME Salary Management — frontend
 
 Next.js 16 (App Router, React 19, TypeScript strict) UI and backend-for-frontend (BFF) for the Rails API.
-Built against [`docs/03-api-contract.md`](../docs/03-api-contract.md). Stack: Tailwind v4, shadcn/ui (Radix),
+Built against the API's OpenAPI contract ([`backend/swagger/v1/swagger.yaml`](../backend/swagger/v1/swagger.yaml),
+UI at `/api-docs`). Stack: Tailwind v4, shadcn/ui (Radix),
 TanStack Query v5, react-hook-form + zod, recharts, Vitest + Testing Library.
 
 ## Commands

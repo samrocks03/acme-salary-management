@@ -1,8 +1,8 @@
 # ACME Salary Management — API (`backend/`)
 
 Rails 8.1 JSON API (Ruby 4.0.7, PostgreSQL 17) behind the Next.js BFF in `../frontend`.
-The contract both apps follow is `../docs/03-api-contract.md`; the OpenAPI version is generated from the request
-specs and served at **http://localhost:3001/api-docs**.
+The contract both apps follow is the OpenAPI document generated from the request specs
+(`spec/requests/api/v1/` → `swagger/v1/swagger.yaml`), served at **http://localhost:3001/api-docs**.
 
 ## Setup
 

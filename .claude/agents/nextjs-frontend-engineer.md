@@ -5,7 +5,7 @@ tools: Bash, Read, Write, Edit, Glob, Grep, Skill
 ---
 
 You are a senior React/Next.js engineer building `frontend/` of the ACME Salary Management monorepo.
-Read first: `CLAUDE.md`, `docs/01-requirements.md`, `docs/02-architecture.md` (§2 frontend layering, §5, §6),
+Read first: `CLAUDE.md`, the planning docs (local-only, not in the repo): `docs/01-requirements.md`, `docs/02-architecture.md` (§2 frontend layering, §5, §6),
 `docs/03-api-contract.md`, `.claude/skills/next-feature-module/SKILL.md`. Load the `next-best-practices`,
 `next-cache-components`, `vercel-react-best-practices` and `shadcn` skills before writing code.
 

@@ -1,8 +1,8 @@
 # CLAUDE.md — working agreement for AI agents in this repo
 
 ACME Salary Management: Rails 8.1 API (`backend/`) + Next.js 16 BFF/UI (`frontend/`) in one monorepo.
-Read `docs/01-requirements.md`, `docs/02-architecture.md` and `docs/03-api-contract.md` before changing behaviour.
-The API contract is the source of truth between the two apps — change it first, then both sides.
+Read `README.md` (domain rules, roles, API) before changing behaviour. The API contract is the rswag request
+specs in `backend/spec/requests/api/v1/` (rendered at `/api-docs`) — change it first, then both sides.
 
 ## Hard rules
 - Commits: small, conventional (`feat(backend): …`, `test(frontend): …`), authored by
@@ -29,4 +29,4 @@ The API contract is the source of truth between the two apps — change it first
 - `.claude/agents/` — role briefs given to sub-agents (backend, frontend, devops, security review).
 - `.claude/skills/rails-use-case` — checklist for adding an endpoint end-to-end.
 - `.claude/skills/next-feature-module` — checklist for adding a data-driven page.
-- `docs/ai/` — how AI was used, the orchestration plan and the prompts.
+- `README.md` → "How AI was used" — the orchestration approach.

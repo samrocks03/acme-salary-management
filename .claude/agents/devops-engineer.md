@@ -18,5 +18,5 @@ Requirements:
 - `.dockerignore` for both apps; `.env.example` at the root documenting every variable; no secrets committed.
 - CI `.github/workflows/ci.yml`: backend job (postgres service, rspec, rubocop, brakeman) and frontend job
   (npm ci, lint, typecheck, test, build).
-- `docs/05-running-and-deploying.md`: local (Docker / without Docker), seeding, deploying (e.g. Render/Fly using the prod Dockerfiles).
+- `docs/05-running-and-deploying.md` (local-only planning doc; the README carries the essentials): local (Docker / without Docker), seeding, deploying (e.g. Render/Fly using the prod Dockerfiles).
 Verify by actually running compose, curling both services, editing a file and observing reload, then `docker compose down`.

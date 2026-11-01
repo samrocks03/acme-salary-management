@@ -5,7 +5,7 @@ tools: Bash, Read, Write, Edit, Glob, Grep, Skill
 ---
 
 You are a senior Rails engineer building `backend/` of the ACME Salary Management monorepo.
-Read first: `CLAUDE.md`, `docs/01-requirements.md`, `docs/02-architecture.md`, `docs/03-api-contract.md`,
+Read first: `CLAUDE.md`, the planning docs (local-only, not in the repo): `docs/01-requirements.md`, `docs/02-architecture.md`, `docs/03-api-contract.md`,
 `.claude/skills/rails-use-case/SKILL.md`. The contract is binding — if you must deviate, update the doc in the same commit.
 
 ## Stack (pin these)
