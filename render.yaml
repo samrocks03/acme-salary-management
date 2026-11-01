@@ -19,8 +19,7 @@ services:
     region: singapore
     dockerfilePath: ./backend/Dockerfile
     dockerContext: ./backend
-    # Load the schema on first boot, seed (idempotent: skipped once employees exist), then start Puma on $PORT.
-    dockerCommand: bash -c "./bin/rails db:prepare && ./bin/rails db:seed && exec ./bin/rails server -b 0.0.0.0"
+    dockerCommand: ./bin/render-start # db:prepare, idempotent seed, then Puma on $PORT
     healthCheckPath: /up
     buildFilter:
       paths:

@@ -1,0 +1,6 @@
+#!/bin/bash -e
+# Start command for Render (render.yaml): prepare the database (loads db/structure.sql on first boot),
+# seed (idempotent: users are find-or-create, employees are skipped once present), then run Puma on $PORT.
+./bin/rails db:prepare
+./bin/rails db:seed
+exec ./bin/rails server -b 0.0.0.0
