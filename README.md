@@ -23,6 +23,10 @@ docker compose up --build        # first run ~5 min (gems + npm); later boots ~1
 The first boot creates the database and seeds **10,000 employees with ~23k salary revisions** (≈ 5 s).
 Code is bind-mounted: edit files on the host and the running Rails / Next servers pick the change up.
 
+**Port already in use?** Host ports are configurable: copy `.env.example` to `.env` and change `UI_PORT`,
+`API_PORT` or `DB_PORT` (e.g. `DB_PORT=5434`), or one-off: `DB_PORT=5434 docker compose up`. The apps talk
+to each other over the compose network, so only the host side changes.
+
 | Sign in as | Password | Role |
 |---|---|---|
 | `hr@acme.test` | `Password@123` | **HR Manager** — full read/write |
@@ -122,6 +126,25 @@ erDiagram
 6. `country_code` can't change after creation (relocation = re-pricing in another currency → v2).
 7. Org-wide numbers are normalised to **USD** with a dated FX table; per-country numbers stay in local currency.
 8. Text input is normalised (`strip_tags` + `squish`) before validation — defence in depth against stored XSS.
+
+**The core write path — recording a raise** (`SalaryRevisionService::Create`):
+```mermaid
+sequenceDiagram
+  participant UI as Browser
+  participant BFF as Next.js /api/proxy
+  participant API as Rails
+  participant DB as PostgreSQL
+  UI->>BFF: POST /employees/42/salary_revisions (cookie)
+  BFF->>API: same request + Authorization: Bearer JWT
+  API->>API: Pundit — hr_manager only (viewer → 403)
+  API->>DB: BEGIN · SELECT … FROM employees WHERE id=42 FOR UPDATE
+  API->>API: previous_amount = current salary · validate rule 5
+  API->>DB: INSERT salary_revisions · UPDATE employees SET salary = amount · COMMIT
+  API-->>UI: 201 revision (amount, previous_amount, % change, author)
+  UI->>UI: invalidate employee, lists, insights (React Query)
+```
+Creating an employee is the same shape: insert the employee and its `hire` revision in one transaction.
+Insights need no invalidation code: their cache key includes the data version, which this write just changed.
 
 ---
 
