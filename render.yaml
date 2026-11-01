@@ -48,5 +48,5 @@ services:
       paths:
         - frontend/**
     envVars:
-      - key: API_URL # server-only; must match the API service's public URL
-        value: https://acme-salary-api.onrender.com
+      - key: API_URL # server-only; the API service's public URL (Render added the -k7nd suffix)
+        value: https://acme-salary-api-k7nd.onrender.com
