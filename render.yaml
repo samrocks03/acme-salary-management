@@ -1,0 +1,52 @@
+# Render Blueprint — deploys the monorepo as two Docker web services + Postgres 17.
+# Create it from https://dashboard.render.com/blueprint/new?repo=https://github.com/samrocks03/acme-salary-management
+#
+# Free plans: web services sleep after 15 min idle (~1 min cold start) and the free database expires after
+# 30 days. Free web services can't receive private-network traffic, so the UI calls the API's public URL.
+
+databases:
+  - name: acme-salary-db
+    databaseName: acme_salary_production
+    postgresMajorVersion: "17" # db/structure.sql is dumped from Postgres 17
+    plan: free
+    region: singapore
+
+services:
+  - type: web
+    name: acme-salary-api
+    runtime: docker
+    plan: free
+    region: singapore
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    # Load the schema on first boot, seed (idempotent: skipped once employees exist), then start Puma on $PORT.
+    dockerCommand: bash -c "./bin/rails db:prepare && ./bin/rails db:seed && exec ./bin/rails server -b 0.0.0.0"
+    healthCheckPath: /up
+    buildFilter:
+      paths:
+        - backend/**
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: acme-salary-db
+          property: connectionString
+      - key: SECRET_KEY_BASE
+        generateValue: true
+      - key: DEVISE_JWT_SECRET_KEY
+        generateValue: true
+      - key: SEED_PASSWORD # password for the seeded hr@ / viewer@ users; production refuses the public demo one
+        sync: false
+
+  - type: web
+    name: acme-salary
+    runtime: docker
+    plan: free
+    region: singapore
+    dockerfilePath: ./frontend/Dockerfile
+    dockerContext: ./frontend
+    buildFilter:
+      paths:
+        - frontend/**
+    envVars:
+      - key: API_URL # server-only; must match the API service's public URL
+        value: https://acme-salary-api.onrender.com
