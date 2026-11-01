@@ -6,6 +6,9 @@ spreadsheets — and to answer *"how does the org pay people?"* in seconds.
 **Rails 8.1 API** (Devise-JWT, Pundit, rswag) · **Next.js 16** (App Router, PPR, TanStack Query, shadcn/ui) ·
 **PostgreSQL 17** · one monorepo · `docker compose up` with live reload.
 
+**Live demo:** https://acme-salary-utmo.onrender.com · API + Swagger: https://acme-salary-api-k7nd.onrender.com/api-docs
+(sign-in details are in the submission email; free hosting sleeps when idle, so the first request can take ~1 min).
+
 ---
 
 ## Quick start
@@ -262,13 +265,18 @@ Docker/CI → review fixes.
 
 ## Deploying
 
-Both apps ship production Dockerfiles (`backend/Dockerfile` from Rails, `frontend/Dockerfile` multi-stage
-standalone, non-root). Any container host works (Render, Fly.io, Railway, ECS):
+Deployed on **Render** from [`render.yaml`](render.yaml) (a Blueprint): Postgres 17 + the API and the UI as two
+Docker web services built from `backend/Dockerfile` and `frontend/Dockerfile` (multi-stage standalone, non-root).
 
-| Service | Required env |
+**Continuous deployment:** a merge to `main` redeploys only the app whose folder changed (`buildFilter`), and only
+once the GitHub Actions checks pass (`autoDeployTrigger: checksPass`), so a red build never ships. The API starts
+through [`bin/render-start`](backend/bin/render-start): `db:prepare` (applies pending migrations; loads the schema
+on first boot) → idempotent `db:seed` → Puma. Changes to `render.yaml` itself are synced by Render.
+
+| Service | Env |
 |---|---|
 | Postgres 17 | — |
-| backend | `DATABASE_URL`, `SECRET_KEY_BASE`, `DEVISE_JWT_SECRET_KEY`, `FRONTEND_ORIGIN`, `SEED_PASSWORD` (for `db:seed`) |
-| frontend | `API_URL` (internal URL of the backend) |
+| API | `DATABASE_URL` (from the database), `SECRET_KEY_BASE` + `DEVISE_JWT_SECRET_KEY` (generated), `SEED_PASSWORD` (entered once in the dashboard; production refuses the public demo password) |
+| UI | `API_URL` — the API's public URL (free Render services can't receive private-network traffic) |
 
-Run `bin/rails db:prepare db:seed` once on the backend, then point users at the frontend.
+Any other container host works the same way: run the two images with these variables.
