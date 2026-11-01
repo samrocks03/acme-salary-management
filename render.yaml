@@ -3,6 +3,10 @@
 #
 # Free plans: web services sleep after 15 min idle (~1 min cold start) and the free database expires after
 # 30 days. Free web services can't receive private-network traffic, so the UI calls the API's public URL.
+#
+# CD: a push to main redeploys only the app whose folder changed (buildFilter), and only after the GitHub
+# Actions checks pass (autoDeployTrigger: checksPass). The API's start script runs db:prepare, which applies
+# pending migrations before Puma starts. Edits to this file are synced to Render automatically.
 
 databases:
   - name: acme-salary-db
@@ -15,6 +19,7 @@ services:
   - type: web
     name: acme-salary-api
     runtime: docker
+    autoDeployTrigger: checksPass
     plan: free
     region: singapore
     dockerfilePath: ./backend/Dockerfile
@@ -39,6 +44,7 @@ services:
   - type: web
     name: acme-salary
     runtime: docker
+    autoDeployTrigger: checksPass
     plan: free
     region: singapore
     dockerfilePath: ./frontend/Dockerfile
