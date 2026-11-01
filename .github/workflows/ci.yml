@@ -37,8 +37,10 @@ jobs:
           working-directory: backend
           ruby-version: .ruby-version
           bundler-cache: true
-      - name: Prepare database (loads db/structure.sql with psql)
-        run: bin/rails db:prepare
+      # Schema only: on a fresh database `db:prepare` would also run db/seeds.rb (10k employees + demo users)
+      # and the specs expect an empty database.
+      - name: Create database and load db/structure.sql
+        run: bin/rails db:create db:schema:load
       - name: RSpec
         run: bundle exec rspec
       - name: RuboCop
